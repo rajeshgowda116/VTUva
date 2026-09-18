@@ -1,35 +1,42 @@
-import os
-from dotenv import load_dotenv
-from qdrant_client import QdrantClient
-from langchain_qdrant import QdrantVectorStore
+from langchain_chroma import Chroma
+from langchain_core.documents import Document
 
-try:
-    from backend.rag.embeddings import get_embeddings
-except ImportError:
-    from embeddings import get_embeddings
+from embeddings import get_embeddings
 
-load_dotenv()
+
+CHROMA_PATH = "./chroma_db"
+COLLECTION_NAME = "vtuva_documents"
 
 
 def get_vector_store():
-    """Connect to Qdrant vector database and return QdrantVectorStore instance."""
+
     embeddings = get_embeddings()
 
-    qdrant_url = os.getenv("QDRANT_URL")
-    qdrant_api_key = os.getenv("QDRANT_API_KEY")
-
-    if not qdrant_url:
-        print("⚠️ Warning: QDRANT_URL environment variable is not set.")
-
-    client = QdrantClient(
-        url=qdrant_url,
-        api_key=qdrant_api_key
+    return Chroma(
+        persist_directory=CHROMA_PATH,
+        collection_name=COLLECTION_NAME,
+        embedding_function=embeddings
     )
 
-    vector_store = QdrantVectorStore(
-        client=client,
-        collection_name="vtuva_documents",
-        embedding=embeddings
-    )
 
-    return vector_store
+def add_documents(chunks):
+
+    vector_store = get_vector_store()
+
+    documents = []
+
+    for chunk in chunks:
+
+        documents.append(
+            Document(
+                page_content=chunk["text"],
+                metadata={
+                    "page": chunk["page"],
+                    "source": chunk["source"]
+                }
+            )
+        )
+
+    vector_store.add_documents(documents)
+
+    print(f"   Added {len(documents)} chunks to ChromaDB")

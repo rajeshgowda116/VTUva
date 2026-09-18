@@ -1,18 +1,22 @@
-try:
-    from backend.rag.vectordb import get_vector_store
-except ImportError:
-    from vectordb import get_vector_store
+from langchain_chroma import Chroma
+from embeddings import get_embeddings
 
 
-def get_retriever(k: int = 5):
-    """Return retriever interface for Qdrant vector store."""
-    vector_store = get_vector_store()
+CHROMA_PATH = "./chroma_db"
 
-    retriever = vector_store.as_retriever(
-        search_type="similarity",
-        search_kwargs={
-            "k": k
-        }
+
+def get_retriever():
+
+    embeddings = get_embeddings()
+
+    vector_store = Chroma(
+        persist_directory=CHROMA_PATH,
+        collection_name="vtuva_documents",
+        embedding_function=embeddings
     )
 
-    return retriever
+    print("Chroma documents:", vector_store._collection.count())
+
+    return vector_store.as_retriever(
+        search_kwargs={"k": 3}
+    )

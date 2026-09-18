@@ -1,3 +1,14 @@
 pypdf==6.19.0
 PyMuPDF==1.28.2
 rapidocr-onnxruntime==1.2.3
+langchain
+langchain-community
+langchain-core
+langchain-huggingface
+langchain-qdrant
+langchain-google-genai
+qdrant-client
+sentence-transformers
+python-dotenv
+fastapi
+uvicorn
