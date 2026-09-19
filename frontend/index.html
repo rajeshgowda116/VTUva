@@ -1,389 +1,347 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VTUva</title>
+  <title>VTUva - Your VTU Academic Assistant</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 </head>
-
 <body class="dark-theme">
 
   <div class="app-container">
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar" id="sidebar">
+      <!-- BRAND LOGO -->
       <div class="sidebar-header">
         <div class="brand">
-          <svg class="chatgpt-icon" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M37.5324 16.8707C37.9808 15.5241 38.0772 14.084 37.8124 12.6857C37.4082 10.5504 36.2343 8.63661 34.5028 7.28919C32.7713 5.94177 30.5907 5.24474 28.3533 5.32433C27.3508 3.65935 25.8856 2.33649 24.1205 1.50257C22.3553 0.668644 20.3592 0.354673 18.3503 0.59508C16.3414 0.835487 14.394 1.62125 12.7214 2.86603C11.0488 4.11082 9.71268 5.7679 8.86016 7.65655C7.03964 7.50269 5.21852 7.97125 3.73801 8.97405C2.2575 9.97686 1.18181 11.4704 0.713508 13.1742C0.245209 14.8779 0.403816 16.7188 1.15939 18.3491C1.91497 19.9794 3.2355 21.3283 4.87224 22.1424C4.4238 23.489 4.32742 24.9291 4.59223 26.3274C4.99645 28.4627 6.17036 30.3765 7.90185 31.7239C9.63334 33.0713 11.8139 33.7683 14.0513 33.6887C15.0538 35.3537 16.519 36.6766 18.2841 37.5105C20.0493 38.3444 22.0454 38.6584 24.0543 38.418C26.0632 38.1776 28.0106 37.3918 29.6832 36.147C31.3558 34.9022 32.6919 33.2451 33.5444 31.3565C35.365 31.5104 37.1861 31.0418 38.6666 30.039C40.1471 29.0362 41.2228 27.5427 41.6911 25.8389C42.1594 24.1352 42.0008 22.2943 41.2452 20.664C40.4896 19.0337 39.1691 17.6848 37.5324 16.8707Z"
-              fill="currentColor" />
-          </svg>
-          <span class="brand-name">VTUva</span>
-        </div>
-        <div class="sidebar-header-actions">
-          <button class="icon-btn" id="search-btn" title="Search chats">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
+          <div class="brand-logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
             </svg>
-          </button>
-          <button class="icon-btn" id="toggle-sidebar-btn" title="Close sidebar (Ctrl+Shift+S)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M9 3v18" />
-            </svg>
-          </button>
+          </div>
+          <div class="brand-text-container">
+            <div class="brand-title">VTU<span class="brand-va">va</span></div>
+            <div class="brand-subtitle">Your VTU Academic Assistant</div>
+          </div>
         </div>
       </div>
 
-      <!-- SIDEBAR NAV LINKS -->
+      <!-- NEW CHAT ACTION BUTTON -->
+      <div class="new-chat-container">
+        <button class="btn-new-chat" id="new-chat-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <span>New Chat</span>
+        </button>
+      </div>
+
+      <!-- SIDEBAR NAVIGATION MENU -->
       <nav class="sidebar-nav">
-        <button class="nav-item new-chat-btn" id="new-chat-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          <span>New chat</span>
+        <button class="nav-link active" data-view="home" id="nav-home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
         </button>
-        <button class="nav-item">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-          </svg>
-          <span>Library</span>
+        <button class="nav-link" data-view="chat" id="nav-chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Chat</span>
         </button>
-        <button class="nav-item">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-          </svg>
-          <span>Projects</span>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+          <span>Study Hub</span>
         </button>
-        <button class="nav-item">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span>Scheduled</span>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Previous Year Questions</span>
         </button>
-        <button class="nav-item">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="4" />
-            <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
-          </svg>
-          <span>Plugins</span>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>Syllabus</span>
         </button>
-        <button class="nav-item">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="19" cy="12" r="1" />
-            <circle cx="5" cy="12" r="1" />
-          </svg>
-          <span>More</span>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Notes</span>
+        </button>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Resources</span>
+        </button>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Quizzes</span>
+        </button>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Timetable</span>
+        </button>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Results Info</span>
+        </button>
+        <button class="nav-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span>Announcements</span>
         </button>
       </nav>
 
-      <!-- SIDEBAR SECTIONS -->
-      <div class="sidebar-scroll">
-        <!-- PINNED SECTION -->
-        <div class="section-container">
-          <div class="section-title">Pinned</div>
-          <ul class="chat-list" id="pinned-chats">
-            <li class="chat-item" data-id="p1"><span class="chat-bullet"></span><span class="chat-title">2nd
-                project</span></li>
-            <li class="chat-item" data-id="p2"><span class="chat-bullet"></span><span class="chat-title">Petrol-saving
-                mobility plan</span></li>
-            <li class="chat-item" data-id="p3"><span class="chat-bullet"></span><span class="chat-title">Codewave</span>
-            </li>
-            <li class="chat-item" data-id="p4"><span class="chat-bullet"></span><span class="chat-title">ML Learning
-                Path</span></li>
-            <li class="chat-item" data-id="p5"><span class="chat-bullet"></span><span class="chat-title">Character intro
-                for Suri</span></li>
-            <li class="chat-item" data-id="p6"><span class="chat-bullet"></span><span class="chat-title">My chat
-                clarification</span></li>
-            <li class="chat-item" data-id="p7"><span class="chat-bullet"></span><span class="chat-title">AI Content
-                Ideas</span></li>
-            <li class="chat-item" data-id="p8"><span class="chat-bullet"></span><span class="chat-title">Mini
-                Project</span></li>
-            <li class="chat-item" data-id="p9"><span class="chat-bullet"></span><span class="chat-title">RAG System
-                Development</span></li>
-            <li class="chat-item" data-id="p10"><span class="chat-bullet"></span><span class="chat-title">Complexity
-                Analysis Apps</span></li>
-          </ul>
+      <!-- RECENT CHATS SECTION -->
+      <div class="recent-chats-section">
+        <div class="recent-header">
+          <span>Recent Chats</span>
+          <a href="#" class="see-all-link">See all</a>
         </div>
-
-        <!-- RECENTS SECTION -->
-        <div class="section-container">
-          <div class="section-title">Recents</div>
-          <ul class="chat-list" id="recent-chats">
-            <li class="chat-item active" data-id="r1">
-              <span class="chat-title">Explain Path Folder Checking</span>
-            </li>
-            <li class="chat-item" data-id="r2">
-              <span class="chat-title">Idea Novelty Check</span>
-            </li>
-            <li class="chat-item" data-id="r3">
-              <span class="chat-title">New tooth cost estimate</span>
-            </li>
-          </ul>
-        </div>
+        <ul class="recent-list" id="recent-chats-list">
+          <li class="recent-item active" data-id="r1">
+            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            <div class="recent-info">
+              <div class="recent-title">Explain CNN in deep learning</div>
+              <div class="recent-time">2 minutes ago</div>
+            </div>
+          </li>
+          <li class="recent-item" data-id="r2">
+            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            <div class="recent-info">
+              <div class="recent-title">BCS403 important questions</div>
+              <div class="recent-time">1 hour ago</div>
+            </div>
+          </li>
+          <li class="recent-item" data-id="r3">
+            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            <div class="recent-info">
+              <div class="recent-title">Difference between ML and DL</div>
+              <div class="recent-time">3 hours ago</div>
+            </div>
+          </li>
+          <li class="recent-item" data-id="r4">
+            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            <div class="recent-info">
+              <div class="recent-title">Explain 5 marks question format</div>
+              <div class="recent-time">Yesterday</div>
+            </div>
+          </li>
+          <li class="recent-item" data-id="r5">
+            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+            <div class="recent-info">
+              <div class="recent-title">Data Structures time complexity</div>
+              <div class="recent-time">2 days ago</div>
+            </div>
+          </li>
+        </ul>
       </div>
 
       <!-- USER PROFILE FOOTER -->
       <div class="user-profile-footer">
-        <div class="user-info">
-          <div class="user-avatar">RG</div>
-          <div class="user-details">
+        <div class="user-profile-info">
+          <div class="user-avatar-circle">R</div>
+          <div class="user-profile-text">
             <div class="user-name">Rajesh Gouda</div>
-            <div class="user-plan">Go</div>
+            <div class="user-usn">4DM24AI038</div>
           </div>
         </div>
-        <button class="icon-btn profile-settings" id="profile-settings-btn" title="Settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path
-              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
+        <button class="icon-btn-options" title="Account Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
         </button>
       </div>
     </aside>
 
-    <!-- MAIN CHAT CONTENT AREA -->
+    <!-- MAIN DASHBOARD CONTENT AREA -->
     <main class="main-content">
-      <!-- TOP HEADER BAR -->
-      <header class="top-header">
-        <div class="left-controls">
-          <button class="icon-btn sidebar-open-btn" id="open-sidebar-btn" title="Open sidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect width="18" height="18" x="3" y="3" rx="2" />
-              <path d="M9 3v18" />
-            </svg>
-          </button>
-          <div class="model-selector" id="model-selector-btn">
-            <span class="model-name">VTUva 1.0</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </div>
+      <!-- TOP SEARCH BAR & HEADER CONTROLS -->
+      <header class="top-bar">
+        <div class="search-bar-container" id="global-search-trigger">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" class="search-input" placeholder="Search for subjects, topics, or ask anything..." readonly />
+          <kbd class="search-kbd">Ctrl K</kbd>
         </div>
 
-        <div class="right-controls">
-          <button class="action-btn share-btn" id="share-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" x2="12" y1="2" y2="15" />
-            </svg>
-            <span>Share</span>
+        <div class="header-right-tools">
+          <button class="icon-tool-btn" id="theme-toggle" title="Toggle theme">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
-          <button class="icon-btn more-options-btn" title="Options">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-              <circle cx="5" cy="12" r="1" />
-            </svg>
+          <button class="icon-tool-btn notification-btn" title="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notification-badge"></span>
           </button>
+          <div class="user-avatar-header">R</div>
         </div>
       </header>
 
-      <!-- MESSAGES SCROLL CONTAINER -->
-      <div class="messages-container" id="messages-container">
-        <div class="messages-list" id="messages-list">
+      <!-- HOME VIEW (HERO & CARDS) -->
+      <div class="view-container active" id="home-view">
+        <div class="home-content-scroll">
+          <!-- HERO BANNER -->
+          <div class="hero-section">
+            <div class="hero-logo-badge">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+            </div>
+            <h1 class="hero-title">VTU<span class="hero-va">va</span></h1>
+            <h2 class="hero-subtitle">Your AI Companion for VTU Success</h2>
+            <p class="hero-description">
+              Ask questions, get explanations, solve doubts, access study material and more — all in one place.
+            </p>
+          </div>
 
-          <!-- USER MESSAGE -->
-          <div class="message-wrapper user">
-            <div class="user-bubble">
-              <pre><code>from pathlib import Path
-pa="data/pdf/frist_sem"
-file=Path(pa)
-print(file)</code></pre>
+          <!-- 4 FEATURE CARDS GRID -->
+          <div class="feature-cards-grid">
+            <!-- CARD 1 -->
+            <div class="feature-card">
+              <div class="card-icon-box blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </div>
+              <h3 class="card-title">Get Explanations</h3>
+              <p class="card-desc">Clear, simple and accurate concept explanations</p>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="feature-card">
+              <div class="card-icon-box green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <h3 class="card-title">Previous Year Questions</h3>
+              <p class="card-desc">Access and solve PYQs with solutions</p>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="feature-card">
+              <div class="card-icon-box yellow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.59 2.92 1.5 3.9.76.76 1.23 1.52 1.41 2.5"/></svg>
+              </div>
+              <h3 class="card-title">Study Smarter</h3>
+              <p class="card-desc">Notes, summaries and important topics</p>
+            </div>
+
+            <!-- CARD 4 -->
+            <div class="feature-card">
+              <div class="card-icon-box pink">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <h3 class="card-title">Exam Preparation</h3>
+              <p class="card-desc">Quizzes, model answers and study plans</p>
             </div>
           </div>
 
-          <!-- ASSISTANT MESSAGE STREAM -->
-          <div class="message-wrapper assistant">
-            <div class="assistant-content">
-              <p>Your code is correct, but note that <code class="inline-code">Path(pa)</code> <strong>does not check
-                  whether the folder exists</strong>. It only creates a <code class="inline-code">Path</code> object
-                representing that path.</p>
+          <!-- TRY ASKING SOMETHING SECTION -->
+          <div class="prompts-section">
+            <div class="prompts-header">
+              <h3>Try asking something</h3>
+              <a href="#" class="view-all-prompts">View all &rarr;</a>
+            </div>
 
-              <!-- CODE BLOCK 1 -->
-              <div class="code-block" id="code-block-1">
-                <div class="code-header">
-                  <div class="code-lang">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="16 18 22 12 16 6" />
-                      <polyline points="8 6 2 12 8 18" />
-                    </svg>
-                    <span>Python</span>
-                  </div>
-                  <div class="code-actions">
-                    <button class="code-btn copy-code-btn" title="Copy code">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                      </svg>
-                    </button>
-                    <button class="code-btn run-code-btn" data-target="code-block-1" title="Run code">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                      <span>Run</span>
-                    </button>
-                  </div>
-                </div>
-                <div class="code-content">
-                  <pre><code class="language-python"><span class="kw">from</span> pathlib <span class="kw">import</span> Path
-
-pa = <span class="str">"data/pdf/frist_sem"</span>
-file = Path(pa)
-
-<span class="fn">print</span>(file)</code></pre>
-                </div>
-                <!-- OUTPUT BOX -->
-                <div class="code-output-container">
-                  <div class="output-header">Output</div>
-                  <div class="output-box">
-                    <span class="output-text">data/pdf/frist_sem</span>
-                    <button class="output-copy-btn" title="Copy output">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+            <div class="prompt-cards-grid">
+              <div class="prompt-pill-card" data-prompt="Explain Transformer architecture in simple terms">
+                <span>Explain Transformer architecture in simple terms</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </div>
-
-              <p>If you want to <strong>check whether the folder exists</strong>, use:</p>
-
-              <!-- CODE BLOCK 2 -->
-              <div class="code-block" id="code-block-2">
-                <div class="code-header">
-                  <div class="code-lang">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="16 18 22 12 16 6" />
-                      <polyline points="8 6 2 12 8 18" />
-                    </svg>
-                    <span>Python</span>
-                  </div>
-                  <div class="code-actions">
-                    <button class="code-btn copy-code-btn" title="Copy code">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                      </svg>
-                    </button>
-                    <button class="code-btn run-code-btn" data-target="code-block-2" title="Run code">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                      <span>Run</span>
-                    </button>
-                  </div>
-                </div>
-                <div class="code-content">
-                  <pre><code class="language-python"><span class="kw">from</span> pathlib <span class="kw">import</span> Path
-
-pa = <span class="str">"data/pdf/frist_sem"</span>
-file = Path(pa)
-
-<span class="fn">print</span>(file)
-<span class="fn">print</span>(file.exists())</code></pre>
-                </div>
+              <div class="prompt-pill-card" data-prompt="Important questions for BCS403">
+                <span>Important questions for BCS403</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </div>
-
-              <!-- STREAMING DOTS (matching screenshot) -->
-              <span class="streaming-dot" id="active-streaming-dot">•••</span>
+              <div class="prompt-pill-card" data-prompt="Compare DBMS and OS">
+                <span>Compare DBMS and OS</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
+              <div class="prompt-pill-card" data-prompt="Give me a 5 mark answer on Virtual Memory">
+                <span>Give me a 5 mark answer on Virtual Memory</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- BOTTOM FLOATING INPUT DOCK -->
-      <div class="input-dock-container">
-        <div class="input-dock">
-          <!-- ATTACHMENT (+) BUTTON -->
-          <button class="attach-btn" id="attach-btn" title="Attach file or image">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
-
-          <!-- INPUT TEXTAREA -->
-          <div class="input-field-wrapper">
-            <textarea id="chat-input" placeholder="Ask anything" rows="1" type="text" name="question"></textarea>
-            <div class="context-tag" id="context-tag">data/pdf/frist_sem</div>
-          </div>
-
-          <!-- RIGHT TOOLBAR ACTIONS -->
-          <div class="input-actions-right">
-            <!-- THINK TOGGLE -->
-            <button class="tool-btn think-btn" id="think-toggle" title="Toggle reasoning model">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
-                <path d="M2 12h20" />
-              </svg>
-              <span>Think</span>
-            </button>
-
-            <!-- VOICE MIC BUTTON -->
-            <button class="tool-btn mic-btn" id="mic-btn" title="Voice input">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" x2="12" y1="19" y2="22" />
-              </svg>
-            </button>
-
-            <!-- SEND / STOP BUTTON -->
-            <button class="send-btn" id="send-btn" title="Send message">
-              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.5">
-                <line x1="12" y1="19" x2="12" y2="5" />
-                <polyline points="5 12 12 5 19 12" />
-              </svg>
-              <svg class="stop-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
-                style="display:none;">
-                <rect width="14" height="14" x="5" y="5" rx="2" />
-              </svg>
-            </button>
+      <!-- CHAT VIEW STREAM -->
+      <div class="view-container" id="chat-view">
+        <div class="chat-messages-container" id="chat-messages-container">
+          <div class="messages-list" id="messages-list">
+            <!-- USER & AI MESSAGES APPENDED HERE DYNAMICALLY -->
           </div>
         </div>
-        <div class="footer-disclaimer">
-          VTUva can make mistakes. Check important info.
+      </div>
+
+      <!-- BOTTOM FLOATING INPUT BAR DOCK -->
+      <div class="bottom-dock-wrapper">
+        <div class="chat-dock-box">
+          <!-- TOP INPUT ROW -->
+          <div class="dock-input-row">
+            <button class="attach-clip-btn" id="attach-btn" title="Attach file or document">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <textarea id="chat-input" placeholder="Ask anything about VTU..." rows="1"></textarea>
+          </div>
+
+          <!-- BOTTOM CONTROLS ROW -->
+          <div class="dock-controls-row">
+            <!-- QUICK FILTER CHIPS -->
+            <div class="filter-chips-group">
+              <button class="chip-btn" data-filter="web">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>Web</span>
+              </button>
+              <button class="chip-btn" data-filter="syllabus">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Syllabus</span>
+              </button>
+              <button class="chip-btn" data-filter="pyqs">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                <span>PYQs</span>
+              </button>
+              <button class="chip-btn" data-filter="notes">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                <span>Notes</span>
+              </button>
+            </div>
+
+            <!-- MODEL SELECTOR & SEND BUTTON -->
+            <div class="dock-actions-right">
+              <div class="model-select-dropdown">
+                <select id="model-select">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="vtuva-4o">VTUva 4o</option>
+                  <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                </select>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+
+              <button class="gradient-send-btn" id="send-btn" title="Send message">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="dock-disclaimer">
+          VTUva may make mistakes. Please verify important information.
         </div>
       </div>
     </main>
   </div>
 
-  <!-- ATTACHMENT MENU MODAL -->
-  <div class="attachment-menu" id="attachment-menu">
-    <div class="menu-item" id="attach-file-opt">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path
-          d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-      </svg>
-      <span>Upload File</span>
+  <!-- SEARCH MODAL (CTRL+K) -->
+  <div class="search-modal-backdrop" id="search-modal">
+    <div class="search-modal-box">
+      <div class="modal-search-input-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="modal-search-field" placeholder="Type a command or search topics..." />
+        <span class="esc-badge">ESC</span>
+      </div>
+      <div class="modal-search-results">
+        <div class="search-group-title">Quick Actions</div>
+        <div class="search-result-item" data-action="new-chat">
+          <span>+ Create New Chat</span>
+        </div>
+        <div class="search-result-item" data-action="search-pyq">
+          <span>Search BCS403 Previous Year Questions</span>
+        </div>
+        <div class="search-result-item" data-action="open-notes">
+          <span>Browse VTU 4th Sem Notes</span>
+        </div>
+      </div>
     </div>
-    <div class="menu-item" id="attach-img-opt">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-        <circle cx="9" cy="9" r="2" />
-        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-      </svg>
-      <span>Upload Image</span>
-    </div>
-    <input type="file" id="file-input-element" style="display:none;" />
   </div>
 
   <!-- TOAST NOTIFICATION -->
@@ -391,5 +349,4 @@ file = Path(pa)
 
   <script src="app.js"></script>
 </body>
-
 </html>

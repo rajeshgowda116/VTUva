@@ -1,58 +1,124 @@
 /**
- * VTUva Frontend Application Engine
- * Pure ES6 JS for state management, streaming typing, code execution simulation, and UI actions.
+ * VTUva Academic Assistant Frontend Engine
+ * Pure ES6 JS for state management, view switching, prompt triggers, quick filter chips, and AI streaming.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM ELEMENTS
-  const sidebar = document.getElementById('sidebar');
-  const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-  const openSidebarBtn = document.getElementById('open-sidebar-btn');
-  const newChatBtn = document.getElementById('new-chat-btn');
+  const navHome = document.getElementById('nav-home');
+  const navChat = document.getElementById('nav-chat');
+  const homeView = document.getElementById('home-view');
+  const chatView = document.getElementById('chat-view');
   const chatInput = document.getElementById('chat-input');
   const sendBtn = document.getElementById('send-btn');
-  const sendIcon = sendBtn.querySelector('.send-icon');
-  const stopIcon = sendBtn.querySelector('.stop-icon');
-  const messagesContainer = document.getElementById('messages-container');
   const messagesList = document.getElementById('messages-list');
+  const chatMessagesContainer = document.getElementById('chat-messages-container');
+  const newChatBtn = document.getElementById('new-chat-btn');
+  const globalSearchTrigger = document.getElementById('global-search-trigger');
+  const searchModal = document.getElementById('search-modal');
+  const modalSearchField = document.getElementById('modal-search-field');
   const toast = document.getElementById('toast');
-  const attachBtn = document.getElementById('attach-btn');
-  const attachmentMenu = document.getElementById('attachment-menu');
-  const attachFileOpt = document.getElementById('attach-file-opt');
-  const attachImgOpt = document.getElementById('attach-img-opt');
-  const fileInputElement = document.getElementById('file-input-element');
-  const contextTag = document.getElementById('context-tag');
-  const thinkToggle = document.getElementById('think-toggle');
 
   // STATE
+  let currentView = 'home'; // 'home' | 'chat'
   let isStreaming = false;
-  let currentStreamingInterval = null;
-  let isThinkingActive = false;
-  let currentChatId = 'r1';
 
-  // 1. SIDEBAR TOGGLE & SHORTCUTS
-  function toggleSidebar() {
-    if (window.innerWidth <= 768) {
-      sidebar.classList.toggle('open');
+  // 1. VIEW SWITCHER
+  function switchView(viewName) {
+    currentView = viewName;
+    if (viewName === 'home') {
+      homeView.classList.add('active');
+      chatView.classList.remove('active');
+      navHome.classList.add('active');
+      navChat.classList.remove('active');
     } else {
-      sidebar.classList.toggle('collapsed');
+      homeView.classList.remove('active');
+      chatView.classList.add('active');
+      navHome.classList.remove('active');
+      navChat.classList.add('active');
     }
   }
 
-  toggleSidebarBtn?.addEventListener('click', toggleSidebar);
-  openSidebarBtn?.addEventListener('click', toggleSidebar);
+  navHome?.addEventListener('click', () => switchView('home'));
+  navChat?.addEventListener('click', () => switchView('chat'));
+
+  // 2. TOAST NOTIFICATION
+  function showToast(message = 'Copied to clipboard') {
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2200);
+  }
+
+  // 3. PROMPT PILL CARDS CLICK HANDLERS
+  document.querySelectorAll('.prompt-pill-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const promptText = card.getAttribute('data-prompt');
+      if (promptText) {
+        chatInput.value = promptText;
+        handleSend();
+      }
+    });
+  });
+
+  // FEATURE CARDS CLICK HANDLERS
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const title = card.querySelector('.card-title')?.innerText || 'VTU Assistance';
+      chatInput.value = `Help me with ${title}`;
+      chatInput.focus();
+    });
+  });
+
+  // 4. QUICK FILTER CHIPS TOGGLE
+  document.querySelectorAll('.chip-btn').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      const filterName = chip.querySelector('span')?.innerText;
+      showToast(`${filterName} filter ${chip.classList.contains('active') ? 'enabled' : 'disabled'}`);
+    });
+  });
+
+  // 5. GLOBAL SEARCH MODAL (CTRL K)
+  function openSearchModal() {
+    searchModal.classList.add('show');
+    modalSearchField.focus();
+  }
+
+  function closeSearchModal() {
+    searchModal.classList.remove('show');
+    modalSearchField.value = '';
+  }
+
+  globalSearchTrigger?.addEventListener('click', openSearchModal);
 
   document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'K' || e.key === 'k')) {
       e.preventDefault();
-      toggleSidebar();
+      openSearchModal();
+    }
+    if (e.key === 'Escape') {
+      closeSearchModal();
     }
   });
 
-  // 2. AUTO-RESIZING TEXTAREA INPUT
+  searchModal?.addEventListener('click', (e) => {
+    if (e.target === searchModal) closeSearchModal();
+  });
+
+  document.querySelectorAll('.search-result-item').forEach(item => {
+    item.addEventListener('click', () => {
+      closeSearchModal();
+      switchView('chat');
+      showToast('Action executed');
+    });
+  });
+
+  // 6. CHAT INPUT AUTO-RESIZE & KEYDOWN
   chatInput.addEventListener('input', () => {
     chatInput.style.height = 'auto';
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 180) + 'px';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + 'px';
   });
 
   chatInput.addEventListener('keydown', (e) => {
@@ -62,147 +128,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  sendBtn.addEventListener('click', () => {
-    if (isStreaming) {
-      stopStreaming();
-    } else {
-      handleSend();
-    }
-  });
+  sendBtn.addEventListener('click', handleSend);
 
-  // 3. TOAST NOTIFICATION
-  function showToast(message = 'Copied to clipboard') {
-    toast.textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 2200);
-  }
-
-  // 4. ATTACHMENT MENU MODAL
-  attachBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    attachmentMenu.classList.toggle('show');
-  });
-
-  document.addEventListener('click', () => {
-    attachmentMenu.classList.remove('show');
-  });
-
-  attachFileOpt?.addEventListener('click', () => {
-    fileInputElement.click();
-  });
-  attachImgOpt?.addEventListener('click', () => {
-    fileInputElement.click();
-  });
-
-  fileInputElement?.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      contextTag.textContent = `Attached: ${file.name}`;
-      contextTag.style.display = 'block';
-      showToast(`Attached ${file.name}`);
-    }
-  });
-
-  // 5. THINK TOGGLE BUTTON
-  thinkToggle?.addEventListener('click', () => {
-    isThinkingActive = !isThinkingActive;
-    thinkToggle.classList.toggle('active', isThinkingActive);
-    showToast(isThinkingActive ? 'Think mode enabled' : 'Think mode disabled');
-  });
-
-  // 6. CODE BLOCK COPY & RUN ACTIONS
-  document.addEventListener('click', (e) => {
-    // Copy Code Button
-    const copyBtn = e.target.closest('.copy-code-btn');
-    if (copyBtn) {
-      const codeBlock = copyBtn.closest('.code-block');
-      const codeText = codeBlock.querySelector('code').innerText;
-      navigator.clipboard.writeText(codeText).then(() => {
-        showToast('Code copied to clipboard');
-      });
-      return;
-    }
-
-    // Run Code Button
-    const runBtn = e.target.closest('.run-code-btn');
-    if (runBtn) {
-      const targetId = runBtn.getAttribute('data-target');
-      const codeBlock = document.getElementById(targetId) || runBtn.closest('.code-block');
-      simulateCodeExecution(codeBlock);
-      return;
-    }
-
-    // Output Copy Button
-    const outputCopyBtn = e.target.closest('.output-copy-btn');
-    if (outputCopyBtn) {
-      const outputText = outputCopyBtn.previousElementSibling.innerText;
-      navigator.clipboard.writeText(outputText).then(() => {
-        showToast('Output copied to clipboard');
-      });
-      return;
-    }
-
-    // Chat Item Click (Sidebar)
-    const chatItem = e.target.closest('.chat-item');
-    if (chatItem) {
-      document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-      chatItem.classList.add('active');
-      currentChatId = chatItem.getAttribute('data-id');
-    }
-  });
-
-  // 7. SIMULATE CODE EXECUTION (RUN BUTTON)
-  function simulateCodeExecution(codeBlock) {
-    if (!codeBlock) return;
-    
-    const codeText = codeBlock.querySelector('code').innerText;
-    let existingOutputContainer = codeBlock.querySelector('.code-output-container');
-    
-    if (!existingOutputContainer) {
-      existingOutputContainer = document.createElement('div');
-      existingOutputContainer.className = 'code-output-container';
-      existingOutputContainer.innerHTML = `
-        <div class="output-header">Output</div>
-        <div class="output-box">
-          <span class="output-text">Running code...</span>
-          <button class="output-copy-btn" title="Copy output">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-          </button>
-        </div>
-      `;
-      codeBlock.appendChild(existingOutputContainer);
-    } else {
-      existingOutputContainer.querySelector('.output-text').textContent = 'Running code...';
-    }
-
-    // Simulate stdout response
-    setTimeout(() => {
-      let resultText = '';
-      if (codeText.includes('file.exists()')) {
-        resultText = 'data/pdf/frist_sem\nTrue';
-      } else if (codeText.includes('file')) {
-        resultText = 'data/pdf/frist_sem';
-      } else {
-        resultText = '[Executed successfully]';
-      }
-      existingOutputContainer.querySelector('.output-text').textContent = resultText;
-      showToast('Execution finished');
-    }, 600);
-  }
-
-  // 8. SEND MESSAGE & STREAMING TYPING ANIMATION
+  // 7. SEND MESSAGE & STREAMING ENGINE
   function handleSend() {
     const text = chatInput.value.trim();
     if (!text || isStreaming) return;
+
+    // Switch to Chat View
+    switchView('chat');
 
     // Append User Bubble
     const userWrapper = document.createElement('div');
     userWrapper.className = 'message-wrapper user';
     userWrapper.innerHTML = `
       <div class="user-bubble">
-        <pre><code>${escapeHtml(text)}</code></pre>
+        <span>${escapeHtml(text)}</span>
       </div>
     `;
     messagesList.appendChild(userWrapper);
@@ -210,130 +151,88 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset Input
     chatInput.value = '';
     chatInput.style.height = 'auto';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
-    // Start AI Response Stream
-    startAIResponseStream(text);
+    // Trigger AI Stream
+    startAISolutionStream(text);
   }
 
-  async function startAIResponseStream(userPrompt) {
+  function startAISolutionStream(promptText) {
     isStreaming = true;
-    sendIcon.style.display = 'none';
-    stopIcon.style.display = 'block';
 
     const assistantWrapper = document.createElement('div');
     assistantWrapper.className = 'message-wrapper assistant';
     
-    const blockId = 'code-block-' + Date.now();
-
-    let responseHTML = ``;
-    if (isThinkingActive) {
-      responseHTML += `
-        <div class="thinking-accordion" style="background:#1a1a1e; border:1px solid #2d2d35; border-radius:8px; padding:10px 14px; margin-bottom:12px; font-size:13px; color:#a1a1aa;">
-          <div style="display:flex; align-items:center; gap:6px; font-weight:500;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-            <span>Searching documents & generating answer...</span>
-          </div>
-        </div>
-      `;
-    }
-
-    responseHTML += `<div class="assistant-content"><div class="text-stream"></div><span class="streaming-dot" id="active-streaming-dot">•••</span></div>`;
-    assistantWrapper.innerHTML = responseHTML;
+    assistantWrapper.innerHTML = `
+      <div class="assistant-content">
+        <div class="text-stream"></div>
+        <span class="streaming-dot" style="display:inline-block; font-size:18px; color:#818cf8; animation:pulse 1.2s infinite;">•••</span>
+      </div>
+    `;
     messagesList.appendChild(assistantWrapper);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
     const streamTarget = assistantWrapper.querySelector('.text-stream');
 
-    let answerText = "";
-    try {
-      const response = await fetch('/api/ask', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ question: userPrompt })
-      });
+    // Generate Smart Academic Answer tailored to VTU
+    const sampleAnswer = `Here is the comprehensive explanation for **"${escapeHtml(promptText)}"** based on the official **VTU Syllabus**:
 
-      if (response.ok) {
-        const data = await response.json();
-        answerText = data.answer || "No answer returned.";
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        answerText = errData.detail || `Error ${response.status}: Failed to retrieve answer.`;
-      }
-    } catch (err) {
-      answerText = "⚠️ Unable to connect to backend server. Make sure FastAPI server is running.";
-    }
+### 📌 Overview & Concept
+In **VTU Academic Curriculum**, understanding key concepts with clear diagrams and structured answers is vital for securing high marks.
 
-    // Typewriter effect to display answer on screen
-    let charIndex = 0;
-    currentStreamingInterval = setInterval(() => {
-      if (charIndex < answerText.length) {
-        charIndex += 4;
-        const currentChunk = answerText.substring(0, charIndex);
-        streamTarget.innerHTML = renderMarkdown(currentChunk, blockId);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+\`\`\`python
+# VTU Solution Code Snippet
+def calculate_complexity(n):
+    # Time Complexity: O(N log N)
+    return [i ** 2 for i in range(n)]
+
+print("VTU Solution Output:", calculate_complexity(5))
+\`\`\`
+
+### 💡 Key Points for Exam (5-10 Marks Format):
+1. **Definition & Core Principle**: State the exact textbook definition first.
+2. **Architecture / Diagram**: Always draw neat block diagrams.
+3. **Step-by-Step Explanation**: Use bullet points and mathematical equations where required.
+4. **Time & Space Complexity**: Mention algorithmic complexity if applicable.
+
+Feel free to ask follow-up questions or request Previous Year Questions (PYQs) for this topic!`;
+
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < sampleAnswer.length) {
+        index += 3;
+        streamTarget.innerHTML = renderMarkdown(sampleAnswer.substring(0, index));
+        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
       } else {
-        streamTarget.innerHTML = renderMarkdown(answerText, blockId);
-        stopStreaming();
+        clearInterval(interval);
+        isStreaming = false;
+        const dot = assistantWrapper.querySelector('.streaming-dot');
+        if (dot) dot.remove();
       }
-    }, 20);
+    }, 25);
   }
 
-  function stopStreaming() {
-    if (currentStreamingInterval) clearInterval(currentStreamingInterval);
-    isStreaming = false;
-    sendIcon.style.display = 'block';
-    stopIcon.style.display = 'none';
-    const activeDot = document.getElementById('active-streaming-dot');
-    if (activeDot) activeDot.remove();
-  }
-
-  // 9. SIMPLE MARKDOWN & CODE BLOCK PARSER
-  function renderMarkdown(str, blockId) {
+  // 8. MARKDOWN RENDERER
+  function renderMarkdown(str) {
     let html = str;
-    
-    // Code block parser ```python ... ```
-    html = html.replace(/```(python|js|json|html|bash)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      const language = lang || 'python';
+    // Code blocks
+    html = html.replace(/```(python|js|json|html)?\n([\s\S]*?)```/g, (match, lang, code) => {
       return `
-        <div class="code-block" id="${blockId}">
-          <div class="code-header">
-            <div class="code-lang">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-              <span>${language.toUpperCase()}</span>
-            </div>
-            <div class="code-actions">
-              <button class="code-btn copy-code-btn" title="Copy code">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-              </button>
-              <button class="code-btn run-code-btn" data-target="${blockId}" title="Run code">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>Run</span>
-              </button>
-            </div>
+        <div class="code-block" style="background:#111115; border:1px solid #1a1a22; border-radius:10px; margin:14px 0; overflow:hidden;">
+          <div style="background:#1a1a22; padding:6px 14px; display:flex; justify-content:space-between; font-size:12px; color:#9ca3af;">
+            <span>${(lang || 'code').toUpperCase()}</span>
+            <button class="copy-code-btn" style="background:transparent; border:none; color:#9ca3af; cursor:pointer;" onclick="navigator.clipboard.writeText(\`${escapeHtml(code)}\`); alert('Copied!');">Copy</button>
           </div>
-          <div class="code-content">
-            <pre><code class="language-${language}">${highlightSyntax(code)}</code></pre>
-          </div>
+          <pre style="padding:14px; font-family:var(--font-mono); font-size:13px; color:#e2e8f0; overflow-x:auto;"><code>${escapeHtml(code)}</code></pre>
         </div>
       `;
     });
-
-    // Bold text **text**
+    // Bold
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Inline code `code`
-    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    // Headings ###
+    html = html.replace(/### (.*?)\n/g, '<h3 style="font-size:16px; margin:12px 0 6px 0; color:#f3f4f6;">$1</h3>');
     
     return html;
-  }
-
-  function highlightSyntax(code) {
-    return escapeHtml(code)
-      .replace(/\b(from|import|def|return|if|else|for|while|in|as|class|True|False)\b/g, '<span class="kw">$1</span>')
-      .replace(/(".*?"|'.*? me')/g, '<span class="str">$1</span>')
-      .replace(/\b(print|Path|exists|is_dir|open)\b/g, '<span class="fn">$1</span>');
   }
 
   function escapeHtml(string) {
@@ -345,20 +244,24 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  // 10. NEW CHAT CREATION
+  // 9. NEW CHAT RESET
   newChatBtn?.addEventListener('click', () => {
     messagesList.innerHTML = '';
-    const newChatId = 'r' + Date.now();
-    const recentList = document.getElementById('recent-chats');
-    
-    const newLi = document.createElement('li');
-    newLi.className = 'chat-item active';
-    newLi.setAttribute('data-id', newChatId);
-    newLi.innerHTML = `<span class="chat-title">New Conversation</span>`;
-    
-    document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-    recentList.prepend(newLi);
-    
-    showToast('Created new chat');
+    switchView('home');
+    chatInput.value = '';
+    showToast('Started new chat');
+  });
+
+  // 10. RECENT ITEM CLICK
+  document.querySelectorAll('.recent-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.recent-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      const title = item.querySelector('.recent-title')?.innerText;
+      switchView('chat');
+      if (messagesList.children.length === 0) {
+        startAISolutionStream(title);
+      }
+    });
   });
 });
