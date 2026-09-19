@@ -1,7 +1,11 @@
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 
-from embeddings import get_embeddings
+try:
+    from .embeddings import get_embeddings
+except ImportError:
+    from embeddings import get_embeddings
+
 
 
 CHROMA_PATH = "./chroma_db"

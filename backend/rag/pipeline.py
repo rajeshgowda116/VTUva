@@ -1,5 +1,10 @@
-from retriever import get_retriever
-from generate import generate_answer
+try:
+    from .retriever import get_retriever
+    from .generate import generate_answer
+except ImportError:
+    from retriever import get_retriever
+    from generate import generate_answer
+
 
 
 def ask_question(question):

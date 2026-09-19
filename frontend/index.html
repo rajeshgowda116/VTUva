@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VTUva</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+
+  <div class="app-container">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <svg class="chatgpt-icon" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M37.5324 16.8707C37.9808 15.5241 38.0772 14.084 37.8124 12.6857C37.4082 10.5504 36.2343 8.63661 34.5028 7.28919C32.7713 5.94177 30.5907 5.24474 28.3533 5.32433C27.3508 3.65935 25.8856 2.33649 24.1205 1.50257C22.3553 0.668644 20.3592 0.354673 18.3503 0.59508C16.3414 0.835487 14.394 1.62125 12.7214 2.86603C11.0488 4.11082 9.71268 5.7679 8.86016 7.65655C7.03964 7.50269 5.21852 7.97125 3.73801 8.97405C2.2575 9.97686 1.18181 11.4704 0.713508 13.1742C0.245209 14.8779 0.403816 16.7188 1.15939 18.3491C1.91497 19.9794 3.2355 21.3283 4.87224 22.1424C4.4238 23.489 4.32742 24.9291 4.59223 26.3274C4.99645 28.4627 6.17036 30.3765 7.90185 31.7239C9.63334 33.0713 11.8139 33.7683 14.0513 33.6887C15.0538 35.3537 16.519 36.6766 18.2841 37.5105C20.0493 38.3444 22.0454 38.6584 24.0543 38.418C26.0632 38.1776 28.0106 37.3918 29.6832 36.147C31.3558 34.9022 32.6919 33.2451 33.5444 31.3565C35.365 31.5104 37.1861 31.0418 38.6666 30.039C40.1471 29.0362 41.2228 27.5427 41.6911 25.8389C42.1594 24.1352 42.0008 22.2943 41.2452 20.664C40.4896 19.0337 39.1691 17.6848 37.5324 16.8707Z"
+              fill="currentColor" />
+          </svg>
+          <span class="brand-name">VTUva</span>
+        </div>
+        <div class="sidebar-header-actions">
+          <button class="icon-btn" id="search-btn" title="Search chats">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </button>
+          <button class="icon-btn" id="toggle-sidebar-btn" title="Close sidebar (Ctrl+Shift+S)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- SIDEBAR NAV LINKS -->
+      <nav class="sidebar-nav">
+        <button class="nav-item new-chat-btn" id="new-chat-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>New chat</span>
+        </button>
+        <button class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+          </svg>
+          <span>Library</span>
+        </button>
+        <button class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>Projects</span>
+        </button>
+        <button class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>Scheduled</span>
+        </button>
+        <button class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" />
+          </svg>
+          <span>Plugins</span>
+        </button>
+        <button class="nav-item">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="19" cy="12" r="1" />
+            <circle cx="5" cy="12" r="1" />
+          </svg>
+          <span>More</span>
+        </button>
+      </nav>
+
+      <!-- SIDEBAR SECTIONS -->
+      <div class="sidebar-scroll">
+        <!-- PINNED SECTION -->
+        <div class="section-container">
+          <div class="section-title">Pinned</div>
+          <ul class="chat-list" id="pinned-chats">
+            <li class="chat-item" data-id="p1"><span class="chat-bullet"></span><span class="chat-title">2nd
+                project</span></li>
+            <li class="chat-item" data-id="p2"><span class="chat-bullet"></span><span class="chat-title">Petrol-saving
+                mobility plan</span></li>
+            <li class="chat-item" data-id="p3"><span class="chat-bullet"></span><span class="chat-title">Codewave</span>
+            </li>
+            <li class="chat-item" data-id="p4"><span class="chat-bullet"></span><span class="chat-title">ML Learning
+                Path</span></li>
+            <li class="chat-item" data-id="p5"><span class="chat-bullet"></span><span class="chat-title">Character intro
+                for Suri</span></li>
+            <li class="chat-item" data-id="p6"><span class="chat-bullet"></span><span class="chat-title">My chat
+                clarification</span></li>
+            <li class="chat-item" data-id="p7"><span class="chat-bullet"></span><span class="chat-title">AI Content
+                Ideas</span></li>
+            <li class="chat-item" data-id="p8"><span class="chat-bullet"></span><span class="chat-title">Mini
+                Project</span></li>
+            <li class="chat-item" data-id="p9"><span class="chat-bullet"></span><span class="chat-title">RAG System
+                Development</span></li>
+            <li class="chat-item" data-id="p10"><span class="chat-bullet"></span><span class="chat-title">Complexity
+                Analysis Apps</span></li>
+          </ul>
+        </div>
+
+        <!-- RECENTS SECTION -->
+        <div class="section-container">
+          <div class="section-title">Recents</div>
+          <ul class="chat-list" id="recent-chats">
+            <li class="chat-item active" data-id="r1">
+              <span class="chat-title">Explain Path Folder Checking</span>
+            </li>
+            <li class="chat-item" data-id="r2">
+              <span class="chat-title">Idea Novelty Check</span>
+            </li>
+            <li class="chat-item" data-id="r3">
+              <span class="chat-title">New tooth cost estimate</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- USER PROFILE FOOTER -->
+      <div class="user-profile-footer">
+        <div class="user-info">
+          <div class="user-avatar">RG</div>
+          <div class="user-details">
+            <div class="user-name">Rajesh Gouda</div>
+            <div class="user-plan">Go</div>
+          </div>
+        </div>
+        <button class="icon-btn profile-settings" id="profile-settings-btn" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CHAT CONTENT AREA -->
+    <main class="main-content">
+      <!-- TOP HEADER BAR -->
+      <header class="top-header">
+        <div class="left-controls">
+          <button class="icon-btn sidebar-open-btn" id="open-sidebar-btn" title="Open sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
+          <div class="model-selector" id="model-selector-btn">
+            <span class="model-name">VTUva 1.0</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="right-controls">
+          <button class="action-btn share-btn" id="share-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" x2="12" y1="2" y2="15" />
+            </svg>
+            <span>Share</span>
+          </button>
+          <button class="icon-btn more-options-btn" title="Options">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="19" cy="12" r="1" />
+              <circle cx="5" cy="12" r="1" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- MESSAGES SCROLL CONTAINER -->
+      <div class="messages-container" id="messages-container">
+        <div class="messages-list" id="messages-list">
+
+          <!-- USER MESSAGE -->
+          <div class="message-wrapper user">
+            <div class="user-bubble">
+              <pre><code>from pathlib import Path
+pa="data/pdf/frist_sem"
+file=Path(pa)
+print(file)</code></pre>
+            </div>
+          </div>
+
+          <!-- ASSISTANT MESSAGE STREAM -->
+          <div class="message-wrapper assistant">
+            <div class="assistant-content">
+              <p>Your code is correct, but note that <code class="inline-code">Path(pa)</code> <strong>does not check
+                  whether the folder exists</strong>. It only creates a <code class="inline-code">Path</code> object
+                representing that path.</p>
+
+              <!-- CODE BLOCK 1 -->
+              <div class="code-block" id="code-block-1">
+                <div class="code-header">
+                  <div class="code-lang">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 18 22 12 16 6" />
+                      <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                    <span>Python</span>
+                  </div>
+                  <div class="code-actions">
+                    <button class="code-btn copy-code-btn" title="Copy code">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                      </svg>
+                    </button>
+                    <button class="code-btn run-code-btn" data-target="code-block-1" title="Run code">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      <span>Run</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="code-content">
+                  <pre><code class="language-python"><span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+pa = <span class="str">"data/pdf/frist_sem"</span>
+file = Path(pa)
+
+<span class="fn">print</span>(file)</code></pre>
+                </div>
+                <!-- OUTPUT BOX -->
+                <div class="code-output-container">
+                  <div class="output-header">Output</div>
+                  <div class="output-box">
+                    <span class="output-text">data/pdf/frist_sem</span>
+                    <button class="output-copy-btn" title="Copy output">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <p>If you want to <strong>check whether the folder exists</strong>, use:</p>
+
+              <!-- CODE BLOCK 2 -->
+              <div class="code-block" id="code-block-2">
+                <div class="code-header">
+                  <div class="code-lang">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="16 18 22 12 16 6" />
+                      <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                    <span>Python</span>
+                  </div>
+                  <div class="code-actions">
+                    <button class="code-btn copy-code-btn" title="Copy code">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                      </svg>
+                    </button>
+                    <button class="code-btn run-code-btn" data-target="code-block-2" title="Run code">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      <span>Run</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="code-content">
+                  <pre><code class="language-python"><span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+pa = <span class="str">"data/pdf/frist_sem"</span>
+file = Path(pa)
+
+<span class="fn">print</span>(file)
+<span class="fn">print</span>(file.exists())</code></pre>
+                </div>
+              </div>
+
+              <!-- STREAMING DOTS (matching screenshot) -->
+              <span class="streaming-dot" id="active-streaming-dot">•••</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTTOM FLOATING INPUT DOCK -->
+      <div class="input-dock-container">
+        <div class="input-dock">
+          <!-- ATTACHMENT (+) BUTTON -->
+          <button class="attach-btn" id="attach-btn" title="Attach file or image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+
+          <!-- INPUT TEXTAREA -->
+          <div class="input-field-wrapper">
+            <textarea id="chat-input" placeholder="Ask anything" rows="1" type="text" name="question"></textarea>
+            <div class="context-tag" id="context-tag">data/pdf/frist_sem</div>
+          </div>
+
+          <!-- RIGHT TOOLBAR ACTIONS -->
+          <div class="input-actions-right">
+            <!-- THINK TOGGLE -->
+            <button class="tool-btn think-btn" id="think-toggle" title="Toggle reasoning model">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                <path d="M2 12h20" />
+              </svg>
+              <span>Think</span>
+            </button>
+
+            <!-- VOICE MIC BUTTON -->
+            <button class="tool-btn mic-btn" id="mic-btn" title="Voice input">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" x2="12" y1="19" y2="22" />
+              </svg>
+            </button>
+
+            <!-- SEND / STOP BUTTON -->
+            <button class="send-btn" id="send-btn" title="Send message">
+              <svg class="send-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5">
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
+              </svg>
+              <svg class="stop-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"
+                style="display:none;">
+                <rect width="14" height="14" x="5" y="5" rx="2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="footer-disclaimer">
+          VTUva can make mistakes. Check important info.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ATTACHMENT MENU MODAL -->
+  <div class="attachment-menu" id="attachment-menu">
+    <div class="menu-item" id="attach-file-opt">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path
+          d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+      </svg>
+      <span>Upload File</span>
+    </div>
+    <div class="menu-item" id="attach-img-opt">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+        <circle cx="9" cy="9" r="2" />
+        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+      </svg>
+      <span>Upload Image</span>
+    </div>
+    <input type="file" id="file-input-element" style="display:none;" />
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
