@@ -1,5 +1,8 @@
 from pathlib import Path
-from langchain_chroma import Chroma
+try:
+    from langchain_chroma import Chroma
+except ImportError:
+    from langchain_community.vectorstores import Chroma
 
 try:
     from .embeddings import get_embeddings

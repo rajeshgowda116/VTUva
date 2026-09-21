@@ -1,6 +1,6 @@
 /**
  * VTUva Academic Assistant Frontend Engine
- * Connects to FastAPI Backend RAG API (http://localhost:8000/ask)
+ * Connects to FastAPI Backend RAG API & MySQL Chat History (/api/chat)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,10 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchModal = document.getElementById('search-modal');
   const modalSearchField = document.getElementById('modal-search-field');
   const toast = document.getElementById('toast');
+  const recentChatsList = document.getElementById('recent-chats-list');
+  const dashboardRecentQuestions = document.getElementById('dashboard-recent-questions');
+  const refreshHistoryLink = document.getElementById('view-all-history-link');
 
   // STATE
   let currentView = 'home'; // 'home' | 'chat'
   let isStreaming = false;
+  let chatHistoryCache = [];
+  const currentUserId = '1';
 
   // API Configuration
   const API_BASE_URL = 'http://localhost:8000';
@@ -134,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sendBtn?.addEventListener('click', handleSend);
 
-  // 7. SEND MESSAGE & RAG API INTEGRATION
+  // 7. SEND MESSAGE & POST /api/chat INTEGRATION
   function handleSend() {
     const text = chatInput.value.trim();
     if (!text || isStreaming) return;
@@ -157,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatInput.style.height = 'auto';
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
-    // Fetch Answer from FastAPI RAG Backend
+    // Fetch Answer from FastAPI RAG Backend and save to MySQL
     fetchRAGAnswer(text);
   }
 
@@ -185,10 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const streamTarget = assistantWrapper.querySelector('.text-stream');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/ask`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-User-ID': currentUserId,
         },
         body: JSON.stringify({ question: promptText }),
       });
@@ -202,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const answerText = data.answer || "No information returned from VTUva.";
       const sources = data.sources || [];
 
-      // Generate HTML for referenced sources (Collapsible by default)
+      // Generate HTML for referenced sources
       let sourcesHtml = '';
       if (sources.length > 0) {
         sourcesHtml = `
@@ -257,17 +263,18 @@ document.addEventListener('DOMContentLoaded', () => {
           scrollToBottom();
           setTimeout(scrollToBottom, 60);
           isStreaming = false;
+          loadChatHistory(); // Refresh history from MySQL after saving
         }
       }, 30);
 
     } catch (err) {
-      console.error("VTUva RAG API Error:", err);
+      console.error("VTUva Chat API Error:", err);
       streamTarget.innerHTML = `
         <div style="color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 12px 16px; border-radius: 10px; font-size: 13.5px; line-height: 1.5;">
           <strong>⚠️ Unable to connect to VTUva Backend</strong><br/>
           ${escapeHtml(err.message)}<br/>
           <span style="font-size: 12px; color: #9ca3af; margin-top: 4px; display: inline-block;">
-            Make sure the FastAPI server is running: <code>python backend/main.py</code> (or <code>uvicorn backend.main:app --port 8000</code>).
+            Make sure FastAPI server & MySQL database are running: <code>python backend/main.py</code>.
           </span>
         </div>
       `;
@@ -275,7 +282,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 8. MARKDOWN RENDERER
+  // 8. FETCH & RENDER CHAT HISTORY (GET /api/chat/history)
+  async function loadChatHistory() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/history`, {
+        headers: {
+          'X-User-ID': currentUserId,
+        }
+      });
+      if (!res.ok) return;
+
+      const history = await res.json();
+      chatHistoryCache = history;
+
+      // Render Sidebar Recent Chats (Latest first)
+      if (recentChatsList) {
+        if (history.length === 0) {
+          recentChatsList.innerHTML = `<li style="padding: 10px 14px; font-size: 12.5px; color: var(--text-muted);">No chat history yet</li>`;
+        } else {
+          const reversed = history.slice().reverse();
+          recentChatsList.innerHTML = reversed.map(item => `
+            <li class="recent-item" data-id="${item.id}" onclick="displayStoredChat(${item.id})">
+              <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              <div class="recent-info">
+                <div class="recent-title">${escapeHtml(item.question)}</div>
+                <div class="recent-time">${formatTimeAgo(item.created_at)}</div>
+              </div>
+            </li>
+          `).join('');
+        }
+      }
+
+      // Render Dashboard Recent Questions
+      if (dashboardRecentQuestions) {
+        if (history.length === 0) {
+          dashboardRecentQuestions.innerHTML = `<div style="color: var(--text-sub); font-size: 13.5px; padding: 8px 0;">No previous questions found. Ask a question below!</div>`;
+        } else {
+          dashboardRecentQuestions.innerHTML = history.map((item, index) => `
+            <div class="recent-question-card">
+              <div class="recent-question-info">
+                <span class="question-number">${index + 1}.</span>
+                <span class="question-text">${escapeHtml(item.question)}</span>
+              </div>
+              <button class="btn-view-answer" onclick="displayStoredChat(${item.id})">View Answer</button>
+            </div>
+          `).join('');
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load chat history:", e);
+    }
+  }
+
+  // DISPLAY A STORED QUESTION & ANSWER IN CHAT VIEW
+  window.displayStoredChat = function(chatId) {
+    const item = chatHistoryCache.find(c => c.id === chatId);
+    if (!item) return;
+
+    switchView('chat');
+    messagesList.innerHTML = `
+      <div class="message-wrapper user">
+        <div class="user-bubble">
+          <span>${escapeHtml(item.question)}</span>
+        </div>
+      </div>
+      <div class="message-wrapper assistant">
+        <div class="assistant-content">
+          <div class="text-stream">${renderMarkdown(item.answer)}</div>
+        </div>
+      </div>
+    `;
+    if (chatMessagesContainer) {
+      chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+  };
+
+  refreshHistoryLink?.addEventListener('click', (e) => {
+    e.preventDefault();
+    loadChatHistory();
+    showToast('Chat history updated');
+  });
+
+  function formatTimeAgo(dateString) {
+    if (!dateString) return 'recently';
+    const date = new Date(dateString);
+    const diffSec = Math.floor((new Date() - date) / 1000);
+    if (isNaN(diffSec) || diffSec < 60) return 'Just now';
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    return `${Math.floor(diffSec / 86400)}d ago`;
+  }
+
+  // 9. MARKDOWN RENDERER
   function renderMarkdown(str) {
     if (!str) return '';
     let html = str;
@@ -321,25 +419,12 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  // 9. NEW CHAT RESET
+  // 10. NEW CHAT RESET
   newChatBtn?.addEventListener('click', () => {
     messagesList.innerHTML = '';
     switchView('home');
     if (chatInput) chatInput.value = '';
     showToast('Started new chat');
-  });
-
-  // 10. RECENT ITEM CLICK
-  document.querySelectorAll('.recent-item').forEach(item => {
-    item.addEventListener('click', () => {
-      document.querySelectorAll('.recent-item').forEach(el => el.classList.remove('active'));
-      item.classList.add('active');
-      const title = item.querySelector('.recent-title')?.innerText;
-      switchView('chat');
-      if (messagesList.children.length === 0 && title) {
-        fetchRAGAnswer(title);
-      }
-    });
   });
 
   // 11. DOCUMENT PREVIEW MODAL HANDLER
@@ -368,4 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
       docModal.classList.remove('show');
     }
   });
+
+  // INITIAL LOAD
+  loadChatHistory();
 });

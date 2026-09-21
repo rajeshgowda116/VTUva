@@ -93,41 +93,7 @@
           <a href="#" class="see-all-link">See all</a>
         </div>
         <ul class="recent-list" id="recent-chats-list">
-          <li class="recent-item active" data-id="r1">
-            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <div class="recent-info">
-              <div class="recent-title">Explain CNN in deep learning</div>
-              <div class="recent-time">2 minutes ago</div>
-            </div>
-          </li>
-          <li class="recent-item" data-id="r2">
-            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <div class="recent-info">
-              <div class="recent-title">BCS403 important questions</div>
-              <div class="recent-time">1 hour ago</div>
-            </div>
-          </li>
-          <li class="recent-item" data-id="r3">
-            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <div class="recent-info">
-              <div class="recent-title">Difference between ML and DL</div>
-              <div class="recent-time">3 hours ago</div>
-            </div>
-          </li>
-          <li class="recent-item" data-id="r4">
-            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <div class="recent-info">
-              <div class="recent-title">Explain 5 marks question format</div>
-              <div class="recent-time">Yesterday</div>
-            </div>
-          </li>
-          <li class="recent-item" data-id="r5">
-            <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <div class="recent-info">
-              <div class="recent-title">Data Structures time complexity</div>
-              <div class="recent-time">2 days ago</div>
-            </div>
-          </li>
+          <!-- Dynamically populated from MySQL chat history -->
         </ul>
       </div>
 
@@ -249,6 +215,18 @@
                 <span>Give me a 5 mark answer on Virtual Memory</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </div>
+            </div>
+          </div>
+
+          <!-- RECENT QUESTIONS / CHAT HISTORY DASHBOARD SECTION -->
+          <div class="prompts-section" style="margin-top: 32px;">
+            <div class="prompts-header">
+              <h3>Recent Questions</h3>
+              <a href="#" id="view-all-history-link" class="view-all-prompts">Refresh</a>
+            </div>
+            <div class="recent-questions-grid" id="dashboard-recent-questions">
+              <!-- Dynamically populated from GET /api/chat/history -->
+              <div style="color: var(--text-sub); font-size: 13.5px; padding: 8px 0;">No previous questions found. Ask a question below!</div>
             </div>
           </div>
         </div>
