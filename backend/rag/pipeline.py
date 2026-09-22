@@ -1,22 +1,18 @@
+import time
 from pathlib import Path
+from typing import Generator, Tuple, List, Dict, Any
 
 try:
     from .retriever import get_retriever
-    from .generate import generate_answer
+    from .generate import generate_answer, generate_answer_stream
+    from .contextualizer import rewrite_question_with_history
 except ImportError:
     from retriever import get_retriever
-    from generate import generate_answer
+    from generate import generate_answer, generate_answer_stream
+    from contextualizer import rewrite_question_with_history
 
 
-def ask_question(question: str):
-    if not question or not question.strip():
-        return {"answer": "Please enter a valid question.", "sources": []}
-
-    retriever = get_retriever()
-    docs = retriever.invoke(question)
-
-    print(f"\n[INFO] Retrieved {len(docs)} document chunks")
-
+def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
     sources = []
     seen = set()
     for doc in docs:
@@ -33,12 +29,46 @@ def ask_question(question: str):
                 "snippet": snippet,
                 "file_path": f"/data/frist_sem/{clean_name}"
             })
+    return sources
+
+
+def ask_question(question: str, history=None) -> Dict[str, Any]:
+    t_start = time.perf_counter()
+
+    if not question or not question.strip():
+        return {"answer": "Please enter a valid question.", "sources": []}
+
+    # 1. Context Rewriting
+    t_rewrite_start = time.perf_counter()
+    standalone_question = rewrite_question_with_history(question, history) if history else question.strip()
+    t_rewrite = time.perf_counter() - t_rewrite_start
+
+    # 2. Vector Retrieval (k=4)
+    t_vector_start = time.perf_counter()
+    retriever = get_retriever(k=4)
+    docs = retriever.invoke(standalone_question)
+    t_vector = time.perf_counter() - t_vector_start
+
+    sources = extract_sources(docs)
 
     if not docs:
+        t_total = time.perf_counter() - t_start
+        print(f"\n[PERF TIMING] Rewrite: {t_rewrite:.3f}s | Vector Search: {t_vector:.3f}s | TOTAL: {t_total:.3f}s")
         return {"answer": "No relevant information found in the VTU documents.", "sources": []}
 
+    # 3. LLM Generation
+    t_llm_start = time.perf_counter()
     context = "\n\n".join(doc.page_content for doc in docs)
-    answer = generate_answer(question, context)
+    answer = generate_answer(standalone_question, context)
+    t_llm = time.perf_counter() - t_llm_start
+
+    t_total = time.perf_counter() - t_start
+
+    print(f"\n[PERF TIMING]\n"
+          f"  - Context Rewriting : {t_rewrite:.3f}s\n"
+          f"  - Vector Search (k=4): {t_vector:.3f}s\n"
+          f"  - LLM Generation   : {t_llm:.3f}s\n"
+          f"  - TOTAL TIME       : {t_total:.3f}s\n")
 
     return {
         "answer": answer,
@@ -46,12 +76,18 @@ def ask_question(question: str):
     }
 
 
-if __name__ == "__main__":
-    while True:
-        question = input("\nAsk a question: ")
-        if question.lower() in ["exit", "quit"]:
-            break
-        res = ask_question(question)
-        print("\nVTUva:")
-        print(res.get("answer"))
-        print("\nSources:", res.get("sources"))
+def prepare_rag_context(question: str, history=None) -> Tuple[str, List[Dict[str, Any]], str, float, float]:
+    """Helper to prepare standalone question, sources, and context for streaming."""
+    t_rewrite_start = time.perf_counter()
+    standalone_question = rewrite_question_with_history(question, history) if history else question.strip()
+    t_rewrite = time.perf_counter() - t_rewrite_start
+
+    t_vector_start = time.perf_counter()
+    retriever = get_retriever(k=4)
+    docs = retriever.invoke(standalone_question)
+    t_vector = time.perf_counter() - t_vector_start
+
+    sources = extract_sources(docs)
+    context = "\n\n".join(doc.page_content for doc in docs)
+
+    return standalone_question, sources, context, t_rewrite, t_vector

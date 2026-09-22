@@ -189,8 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const streamTarget = assistantWrapper.querySelector('.text-stream');
 
+    function scrollToBottom() {
+      if (!chatMessagesContainer) return;
+      chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,9 +209,56 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(errData.detail || `Server returned status ${response.status}`);
       }
 
-      const data = await response.json();
-      const answerText = data.answer || "No information returned from VTUva.";
-      const sources = data.sources || [];
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedAnswer = '';
+      let sources = [];
+      let isFirstChunk = true;
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const payload = JSON.parse(line.slice(6));
+              if (payload.type === 'sources') {
+                sources = payload.sources || [];
+              } else if (payload.type === 'token') {
+                if (isFirstChunk) {
+                  streamTarget.innerHTML = '';
+                  isFirstChunk = false;
+                }
+                accumulatedAnswer += payload.token;
+                streamTarget.innerHTML = renderMarkdown(accumulatedAnswer);
+                scrollToBottom();
+              }
+            } catch (e) {
+              // Partial JSON line
+            }
+          }
+        }
+      }
+
+      // Process remaining buffer if any
+      if (buffer && buffer.startsWith('data: ')) {
+        try {
+          const payload = JSON.parse(buffer.slice(6));
+          if (payload.type === 'token') {
+            if (isFirstChunk) {
+              streamTarget.innerHTML = '';
+              isFirstChunk = false;
+            }
+            accumulatedAnswer += payload.token;
+          }
+        } catch (e) {}
+      }
 
       // Generate HTML for referenced sources
       let sourcesHtml = '';
@@ -241,31 +293,16 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
-      // Smooth word-by-word streaming effect
-      const words = answerText.split(' ');
-      let currentWordIndex = 0;
-      streamTarget.innerHTML = '';
-
-      function scrollToBottom() {
-        if (!chatMessagesContainer) return;
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      if (isFirstChunk) {
+        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer || "No answer generated.");
+      } else {
+        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer) + sourcesHtml;
       }
-
-      const interval = setInterval(() => {
-        if (currentWordIndex < words.length) {
-          currentWordIndex += 3;
-          const chunk = words.slice(0, currentWordIndex).join(' ');
-          streamTarget.innerHTML = renderMarkdown(chunk);
-          scrollToBottom();
-        } else {
-          clearInterval(interval);
-          streamTarget.innerHTML = renderMarkdown(answerText) + sourcesHtml;
-          scrollToBottom();
-          setTimeout(scrollToBottom, 60);
-          isStreaming = false;
-          loadChatHistory(); // Refresh history from MySQL after saving
-        }
-      }, 30);
+      
+      scrollToBottom();
+      setTimeout(scrollToBottom, 60);
+      isStreaming = false;
+      loadChatHistory(); // Refresh history from MySQL
 
     } catch (err) {
       console.error("VTUva Chat API Error:", err);
