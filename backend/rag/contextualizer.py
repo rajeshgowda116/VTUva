@@ -4,9 +4,9 @@ from typing import List, Dict, Optional
 from dotenv import load_dotenv
 
 try:
-    from .generate import get_llm
+    from .generate import get_llm, extract_text_from_chunk
 except ImportError:
-    from generate import get_llm
+    from generate import get_llm, extract_text_from_chunk
 
 load_dotenv()
 

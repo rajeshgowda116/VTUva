@@ -15,9 +15,9 @@ def get_llm():
 
     groq_api_key = os.getenv("GROQ_API_KEY")
     if groq_api_key and groq_api_key.strip():
+        model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
         try:
             from langchain_groq import ChatGroq
-            model_name = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
             _llm_instance = ChatGroq(
                 model=model_name,
                 groq_api_key=groq_api_key.strip(),
@@ -26,7 +26,18 @@ def get_llm():
             print(f"[INIT] Groq LLM instance initialized with model '{model_name}'.")
             return _llm_instance
         except Exception as e:
-            print(f"[LLM Warning] Failed to initialize Groq LLM: {e}")
+            print(f"[LLM Warning] Failed to initialize Groq model '{model_name}': {e}. Retrying with 'qwen/qwen3.8-27b'...")
+            try:
+                from langchain_groq import ChatGroq
+                _llm_instance = ChatGroq(
+                    model="qwen/qwen3.8-27b",
+                    groq_api_key=groq_api_key.strip(),
+                    temperature=0
+                )
+                print("[INIT] Groq LLM instance initialized with model 'qwen/qwen3.8-27b'.")
+                return _llm_instance
+            except Exception as e2:
+                print(f"[LLM Warning] Groq fallback failed: {e2}")
 
     # Fallback to Google Gemini
     google_api_key = os.getenv("GOOGLE_API_KEY")

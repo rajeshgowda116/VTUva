@@ -6,6 +6,11 @@ except ImportError:
     from langchain_community.vectorstores import Chroma
 
 try:
+    import chromadb
+except ImportError:
+    chromadb = None
+
+try:
     from .embeddings import get_embeddings
 except ImportError:
     from embeddings import get_embeddings
@@ -20,11 +25,28 @@ def get_vector_store():
     global _vector_store_instance
     if _vector_store_instance is None:
         embeddings = get_embeddings()
-        _vector_store_instance = Chroma(
-            persist_directory=str(CHROMA_PATH),
-            collection_name="vtuva_documents",
-            embedding_function=embeddings
-        )
+        try:
+            if chromadb:
+                client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+                _vector_store_instance = Chroma(
+                    client=client,
+                    collection_name="vtuva_documents",
+                    embedding_function=embeddings
+                )
+            else:
+                _vector_store_instance = Chroma(
+                    persist_directory=str(CHROMA_PATH),
+                    collection_name="vtuva_documents",
+                    embedding_function=embeddings
+                )
+        except Exception as e:
+            print(f"[Chroma Client Info] Initializing persistent vector store fallback: {e}")
+            _vector_store_instance = Chroma(
+                persist_directory=str(CHROMA_PATH),
+                collection_name="vtuva_documents",
+                embedding_function=embeddings
+            )
+
         print(f"[INIT] Chroma Vector Store loaded with {_vector_store_instance._collection.count()} documents.")
     return _vector_store_instance
 
