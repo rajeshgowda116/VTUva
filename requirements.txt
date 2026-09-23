@@ -7,6 +7,8 @@ langchain-core
 langchain-huggingface
 langchain-qdrant
 langchain-google-genai
+langchain-groq
+langchain-ollama
 qdrant-client
 sentence-transformers
 python-dotenv

@@ -80,9 +80,41 @@ app.add_middleware(
 )
 
 
+import urllib.request
+
+
 @app.get("/api/health")
 def health_check():
     return {"status": "online", "message": "VTUva Backend API is running"}
+
+
+@app.get("/api/health/ollama")
+def ollama_health_check():
+    """Verifies whether the local Ollama server is reachable."""
+    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+    model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
+
+    try:
+        req = urllib.request.Request(f"{base_url}/api/tags", headers={"User-Agent": "VTUva-Backend"})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8"))
+                models = [m.get("name") for m in data.get("models", [])]
+                return {
+                    "status": "online",
+                    "provider": "ollama",
+                    "base_url": base_url,
+                    "configured_model": model_name,
+                    "available_models": models
+                }
+    except Exception:
+        return {
+            "status": "offline",
+            "provider": "ollama",
+            "base_url": base_url,
+            "configured_model": model_name,
+            "message": f"Could not connect to Ollama server at {base_url}. Ensure Ollama is running (`ollama serve`)."
+        }
 
 
 @app.post("/api/chat/stream")
