@@ -16,12 +16,13 @@ def get_llm():
         return None
 
     if _llm_instance is None:
+        # Using gemini-1.5-flash (provides 1,500 free requests/day vs 20/day on 2.5-flash)
         _llm_instance = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             google_api_key=api_key,
             temperature=0
         )
-        print("[INIT] Gemini 2.5 Flash LLM instance initialized.")
+        print("[INIT] Gemini 1.5 Flash LLM instance initialized.")
     return _llm_instance
 
 
@@ -97,4 +98,8 @@ def generate_answer_stream(question: str, context: str) -> Generator[str, None, 
             if chunk and chunk.content:
                 yield chunk.content
     except Exception as e:
-        yield f"\n\n⚠️ Error generating stream from Gemini API: {str(e)}"
+        err_msg = str(e)
+        if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
+            yield "\n\n⚠️ **Gemini API Rate Limit Reached (429)**: The free tier rate limit was temporarily exceeded. Please wait ~1 minute and retry."
+        else:
+            yield f"\n\n⚠️ Error generating stream from Gemini API: {err_msg}"

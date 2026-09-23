@@ -28,8 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let chatHistoryCache = [];
   const currentUserId = '1';
 
-  // API Configuration
-  const API_BASE_URL = 'http://localhost:8000';
+  // API Configuration (dynamic origin fallback)
+  const API_BASE_URL = (window.location.origin && window.location.origin.startsWith('http'))
+    ? window.location.origin
+    : 'http://127.0.0.1:8000';
 
   // 1. VIEW SWITCHER
   function switchView(viewName) {
