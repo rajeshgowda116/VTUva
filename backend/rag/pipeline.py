@@ -5,11 +5,14 @@ from typing import Generator, Tuple, List, Dict, Any
 try:
     from .retriever import get_retriever
     from .generate import generate_answer, generate_answer_stream
-    from .contextualizer import rewrite_question_with_history
+    from .contextualizer import rewrite_question_with_history, is_greeting
 except ImportError:
     from retriever import get_retriever
     from generate import generate_answer, generate_answer_stream
-    from contextualizer import rewrite_question_with_history
+    from contextualizer import rewrite_question_with_history, is_greeting
+
+
+GREETING_RESPONSE = "Hello! I am VTUva, your VTU engineering study assistant. How can I help you with your VTU subjects, notes, or syllabus today?"
 
 
 def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
@@ -38,9 +41,18 @@ def ask_question(question: str, history=None) -> Dict[str, Any]:
     if not question or not question.strip():
         return {"answer": "Please enter a valid question.", "sources": []}
 
+    q_clean = question.strip()
+
+    # Fast Path for Greetings
+    if is_greeting(q_clean):
+        return {
+            "answer": GREETING_RESPONSE,
+            "sources": []
+        }
+
     # 1. Context Rewriting
     t_rewrite_start = time.perf_counter()
-    standalone_question = rewrite_question_with_history(question, history) if history else question.strip()
+    standalone_question = rewrite_question_with_history(q_clean, history) if history else q_clean
     t_rewrite = time.perf_counter() - t_rewrite_start
 
     # 2. Vector Retrieval (k=4)
@@ -78,8 +90,13 @@ def ask_question(question: str, history=None) -> Dict[str, Any]:
 
 def prepare_rag_context(question: str, history=None) -> Tuple[str, List[Dict[str, Any]], str, float, float]:
     """Helper to prepare standalone question, sources, and context for streaming."""
+    q_clean = question.strip() if question else ""
+
+    if is_greeting(q_clean):
+        return q_clean, [], "__GREETING__", 0.0, 0.0
+
     t_rewrite_start = time.perf_counter()
-    standalone_question = rewrite_question_with_history(question, history) if history else question.strip()
+    standalone_question = rewrite_question_with_history(q_clean, history) if history else q_clean
     t_rewrite = time.perf_counter() - t_rewrite_start
 
     t_vector_start = time.perf_counter()

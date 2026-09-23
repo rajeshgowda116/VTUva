@@ -10,6 +10,12 @@ except ImportError:
 
 load_dotenv()
 
+GREETINGS = {
+    "hi", "hii", "hiii", "hello", "hey", "heyy", "hola", "namaste",
+    "good morning", "good afternoon", "good evening", "howdy",
+    "who are you", "what is vtuva", "thanks", "thank you", "bye", "goodbye"
+}
+
 FOLLOWUP_PRONOUNS = {
     "it", "its", "this", "that", "these", "those", "they", "them", "their", "his", "her"
 }
@@ -23,13 +29,24 @@ FOLLOWUP_PHRASES = [
 ]
 
 
+def is_greeting(question: str) -> bool:
+    """Checks if a user input is a casual greeting or conversational message."""
+    if not question:
+        return False
+    q_clean = question.lower().strip().strip("!.,?")
+    return q_clean in GREETINGS
+
+
 def is_follow_up_question(question: str) -> bool:
     """
     Fast, lightweight heuristic to check if a question is a follow-up.
     Returns True if the question contains pronouns or referential phrases.
-    Returns False if the question is already standalone.
+    Returns False if the question is standalone or a greeting.
     """
     if not question:
+        return False
+
+    if is_greeting(question):
         return False
 
     q_lower = question.lower().strip()
@@ -57,7 +74,7 @@ def rewrite_question_with_history(current_question: str, history: Optional[List[
     """
     Rewrites the latest user question into a standalone question using conversation history.
     
-    If history is empty, missing, or question is already standalone, returns current_question unchanged immediately.
+    If history is empty, missing, or question is standalone / greeting, returns current_question unchanged immediately.
     """
     if not current_question or not current_question.strip():
         return current_question
@@ -67,9 +84,9 @@ def rewrite_question_with_history(current_question: str, history: Optional[List[
     if not history:
         return current_question_clean
 
-    # FAST PATH: Skip LLM call if question is standalone!
+    # FAST PATH: Skip LLM call if question is standalone or greeting!
     if not is_follow_up_question(current_question_clean):
-        print(f"[Contextualizer] Fast path: '{current_question_clean}' is standalone. Skipping LLM rewrite.")
+        print(f"[Contextualizer] Fast path: '{current_question_clean}' is standalone/greeting. Skipping LLM rewrite.")
         return current_question_clean
 
     # Format history for prompt (limit to recent 3 exchanges)
@@ -114,7 +131,7 @@ Latest user question:
 
     try:
         response = llm.invoke(prompt)
-        rewritten = response.content.strip() if response and response.content else current_question_clean
+        rewritten = extract_text_from_chunk(response).strip() if response else current_question_clean
 
         if rewritten.startswith('```') and rewritten.endswith('```'):
             rewritten = rewritten.strip('`').strip()

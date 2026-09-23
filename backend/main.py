@@ -158,6 +158,27 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
         # Send initial metadata (sources) immediately
         yield f"data: {json.dumps({'type': 'sources', 'sources': sources, 'standalone_question': standalone_question})}\n\n"
 
+        if context == "__GREETING__":
+            greeting_msg = "Hello! I am VTUva, your VTU engineering study assistant. How can I help you with your VTU subjects, notes, or syllabus today?"
+            yield f"data: {json.dumps({'type': 'token', 'token': greeting_msg})}\n\n"
+            try:
+                chat_record = ChatHistory(
+                    user_id=user_id,
+                    question=question_text,
+                    answer=greeting_msg,
+                    created_at=datetime.utcnow()
+                )
+                db.add(chat_record)
+                db.commit()
+                db.refresh(chat_record)
+                rec_id = chat_record.id
+            except Exception:
+                db.rollback()
+                rec_id = 0
+
+            yield f"data: {json.dumps({'type': 'done', 'id': rec_id})}\n\n"
+            return
+
         if not context:
             no_info_msg = "No relevant information found in the VTU documents."
             yield f"data: {json.dumps({'type': 'token', 'token': no_info_msg})}\n\n"
