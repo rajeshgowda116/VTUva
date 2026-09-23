@@ -1,7 +1,6 @@
 import os
 from typing import Generator
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
@@ -9,21 +8,42 @@ _llm_instance = None
 
 
 def get_llm():
-    """Singleton lazy loader for ChatGoogleGenerativeAI instance."""
+    """Singleton lazy loader for LLM instance (Groq ChatGroq primary, Gemini fallback)."""
     global _llm_instance
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        return None
+    if _llm_instance is not None:
+        return _llm_instance
 
-    if _llm_instance is None:
-        # Using gemini-1.5-flash (provides 1,500 free requests/day vs 20/day on 2.5-flash)
-        _llm_instance = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
-            google_api_key=api_key,
-            temperature=0
-        )
-        print("[INIT] Gemini 1.5 Flash LLM instance initialized.")
-    return _llm_instance
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key and groq_api_key.strip():
+        try:
+            from langchain_groq import ChatGroq
+            model_name = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+            _llm_instance = ChatGroq(
+                model=model_name,
+                groq_api_key=groq_api_key.strip(),
+                temperature=0
+            )
+            print(f"[INIT] Groq LLM instance initialized with model '{model_name}'.")
+            return _llm_instance
+        except Exception as e:
+            print(f"[LLM Warning] Failed to initialize Groq LLM: {e}")
+
+    # Fallback to Google Gemini
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if google_api_key and google_api_key.strip():
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            _llm_instance = ChatGoogleGenerativeAI(
+                model="gemini-1.5-flash",
+                google_api_key=google_api_key.strip(),
+                temperature=0
+            )
+            print("[INIT] Gemini LLM instance initialized (Fallback).")
+            return _llm_instance
+        except Exception as e:
+            print(f"[LLM Warning] Failed to initialize Gemini LLM: {e}")
+
+    return None
 
 
 def build_prompt(question: str, context: str) -> str:
@@ -53,53 +73,62 @@ ANSWER:
 """
 
 
+def extract_text_from_chunk(chunk) -> str:
+    if not chunk:
+        return ""
+    content = getattr(chunk, "content", chunk)
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and item.get("text"):
+                parts.append(item["text"])
+        return "".join(parts)
+    return str(content) if content else ""
+
+
 def generate_answer(question: str, context: str) -> str:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
+    llm = get_llm()
+    if not llm:
         return (
-            "⚠️ **Gemini API Key Missing**\n\n"
-            "Please set your `GOOGLE_API_KEY` in the `.env` file at the root of the project to enable AI answer generation.\n\n"
+            "⚠️ **API Key Missing**\n\n"
+            "Please set `GROQ_API_KEY` (or `GOOGLE_API_KEY`) in your `.env` file to enable AI answer generation.\n\n"
             "**Retrieved Context Snippet:**\n"
             f"{context[:400]}..."
         )
-
-    llm = get_llm()
-    if not llm:
-        return "⚠️ Unable to initialize Gemini LLM. Please check your GOOGLE_API_KEY configuration."
 
     prompt = build_prompt(question, context)
 
     try:
         response = llm.invoke(prompt)
-        return response.content
+        return extract_text_from_chunk(response)
     except Exception as e:
-        return f"⚠️ Error generating answer from Gemini API: {str(e)}"
+        return f"⚠️ Error generating answer from LLM API: {str(e)}"
 
 
 def generate_answer_stream(question: str, context: str) -> Generator[str, None, None]:
-    """Yields generated tokens one by one as they arrive from Gemini."""
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        yield (
-            "⚠️ **Gemini API Key Missing**\n\n"
-            "Please set your `GOOGLE_API_KEY` in the `.env` file at the root of the project."
-        )
-        return
-
+    """Yields generated tokens one by one as they arrive from the LLM."""
     llm = get_llm()
     if not llm:
-        yield "⚠️ Unable to initialize Gemini LLM. Please check your GOOGLE_API_KEY configuration."
+        yield (
+            "⚠️ **API Key Missing**\n\n"
+            "Please set `GROQ_API_KEY` in your `.env` file at the root of the project."
+        )
         return
 
     prompt = build_prompt(question, context)
 
     try:
         for chunk in llm.stream(prompt):
-            if chunk and chunk.content:
-                yield chunk.content
+            text_chunk = extract_text_from_chunk(chunk)
+            if text_chunk:
+                yield text_chunk
     except Exception as e:
         err_msg = str(e)
-        if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg:
-            yield "\n\n⚠️ **Gemini API Rate Limit Reached (429)**: The free tier rate limit was temporarily exceeded. Please wait ~1 minute and retry."
+        if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "rate_limit" in err_msg.lower():
+            yield "\n\n⚠️ **Groq API Rate Limit Reached (429)**: Free tier limit reached. Please retry in a few seconds."
         else:
-            yield f"\n\n⚠️ Error generating stream from Gemini API: {err_msg}"
+            yield f"\n\n⚠️ Error generating stream from Groq API: {err_msg}"
