@@ -7,19 +7,65 @@ load_dotenv()
 _llm_instance = None
 
 
-def get_llm():
+def get_llm(model_override: str = None):
     """
     Singleton lazy loader for LLM instance.
-    Supports LLM_PROVIDER=ollama | groq | gemini via environment variables.
+    Supports model_override parameter for fast contextualization.
+    Supports LLM_PROVIDER=gemini | groq | ollama via environment variables.
     """
     global _llm_instance
+    if model_override:
+        google_api_key = os.getenv("GOOGLE_API_KEY")
+        if google_api_key:
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                return ChatGoogleGenerativeAI(
+                    model=model_override,
+                    google_api_key=google_api_key.strip(),
+                    temperature=0
+                )
+            except Exception:
+                pass
+
     if _llm_instance is not None:
         return _llm_instance
 
     provider = os.getenv("LLM_PROVIDER", "").lower().strip()
 
-    # 1. OLLAMA LOCAL LLM (if LLM_PROVIDER=ollama or explicit OLLAMA_MODEL configured)
-    if provider == "ollama" or (not provider and os.getenv("OLLAMA_MODEL")):
+    # 1. GOOGLE GEMINI API (Default High-Speed Cloud Provider)
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if (provider == "gemini" or not provider) and google_api_key and google_api_key.strip():
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            _llm_instance = ChatGoogleGenerativeAI(
+                model=model_name,
+                google_api_key=google_api_key.strip(),
+                temperature=0
+            )
+            print(f"[INIT] Gemini Fast LLM instance initialized ({model_name}).")
+            return _llm_instance
+        except Exception as e:
+            print(f"[LLM Warning] Failed to initialize Gemini LLM: {e}")
+
+    # 2. GROQ API (Alternative Cloud Provider)
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if (provider == "groq" or not provider) and groq_api_key and groq_api_key.strip():
+        model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+        try:
+            from langchain_groq import ChatGroq
+            _llm_instance = ChatGroq(
+                model=model_name,
+                groq_api_key=groq_api_key.strip(),
+                temperature=0
+            )
+            print(f"[INIT] Groq LLM instance initialized with model '{model_name}'.")
+            return _llm_instance
+        except Exception as e:
+            print(f"[LLM Warning] Failed to initialize Groq model '{model_name}': {e}.")
+
+    # 3. OLLAMA LOCAL LLM
+    if provider == "ollama" or os.getenv("OLLAMA_MODEL"):
         base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").strip()
         model_name = os.getenv("OLLAMA_MODEL", "llama3.2").strip()
         try:
@@ -37,37 +83,6 @@ def get_llm():
             return _llm_instance
         except Exception as e:
             print(f"[LLM Warning] Failed to initialize Ollama LLM: {e}")
-
-    # 2. GROQ API (Primary Cloud Provider)
-    groq_api_key = os.getenv("GROQ_API_KEY")
-    if (provider == "groq" or not provider) and groq_api_key and groq_api_key.strip():
-        model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
-        try:
-            from langchain_groq import ChatGroq
-            _llm_instance = ChatGroq(
-                model=model_name,
-                groq_api_key=groq_api_key.strip(),
-                temperature=0
-            )
-            print(f"[INIT] Groq LLM instance initialized with model '{model_name}'.")
-            return _llm_instance
-        except Exception as e:
-            print(f"[LLM Warning] Failed to initialize Groq model '{model_name}': {e}.")
-
-    # 3. GOOGLE GEMINI API (Fallback Cloud Provider)
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    if (provider == "gemini" or not provider) and google_api_key and google_api_key.strip():
-        try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            _llm_instance = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                google_api_key=google_api_key.strip(),
-                temperature=0
-            )
-            print("[INIT] Gemini LLM instance initialized (Fallback).")
-            return _llm_instance
-        except Exception as e:
-            print(f"[LLM Warning] Failed to initialize Gemini LLM: {e}")
 
     return None
 
@@ -121,7 +136,7 @@ def generate_answer(question: str, context: str) -> str:
     if not llm:
         return (
             "⚠️ **LLM Provider Configuration Missing**\n\n"
-            "Please set `LLM_PROVIDER=ollama` (or set `GROQ_API_KEY` / `GOOGLE_API_KEY`) in your `.env` file.\n\n"
+            "Please set `GOOGLE_API_KEY` in your `.env` file.\n\n"
             "**Retrieved Context Snippet:**\n"
             f"{context[:400]}..."
         )
@@ -134,7 +149,7 @@ def generate_answer(question: str, context: str) -> str:
     except Exception as e:
         err_msg = str(e)
         if "connection" in err_msg.lower() or "connect" in err_msg.lower() or "11434" in err_msg:
-            return f"⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`. Ensure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull {os.getenv('OLLAMA_MODEL', 'llama3.2')}`)."
+            return f"⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`."
         return f"⚠️ Error generating answer from LLM API: {err_msg}"
 
 
@@ -144,7 +159,7 @@ def generate_answer_stream(question: str, context: str) -> Generator[str, None, 
     if not llm:
         yield (
             "⚠️ **LLM Provider Configuration Missing**\n\n"
-            "Please set `LLM_PROVIDER=ollama` in your `.env` file at the root of the project."
+            "Please set `GOOGLE_API_KEY` in your `.env` file at the root of the project."
         )
         return
 
@@ -158,7 +173,7 @@ def generate_answer_stream(question: str, context: str) -> Generator[str, None, 
     except Exception as e:
         err_msg = str(e)
         if "connection" in err_msg.lower() or "connect" in err_msg.lower() or "11434" in err_msg:
-            yield f"\n\n⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`.\n\nPlease ensure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull {os.getenv('OLLAMA_MODEL', 'llama3.2')}`)."
+            yield f"\n\n⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`."
         elif "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "rate_limit" in err_msg.lower():
             yield "\n\n⚠️ **API Rate Limit Reached (429)**: Free tier limit reached. Please retry in a few seconds."
         else:

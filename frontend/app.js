@@ -218,6 +218,17 @@ document.addEventListener('DOMContentLoaded', () => {
       let isFirstChunk = true;
       let buffer = '';
 
+      let renderScheduled = false;
+      function scheduleRender() {
+        if (renderScheduled) return;
+        renderScheduled = true;
+        requestAnimationFrame(() => {
+          renderScheduled = false;
+          streamTarget.innerHTML = renderMarkdown(accumulatedAnswer);
+          scrollToBottom();
+        });
+      }
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -238,8 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   isFirstChunk = false;
                 }
                 accumulatedAnswer += payload.token;
-                streamTarget.innerHTML = renderMarkdown(accumulatedAnswer);
-                scrollToBottom();
+                scheduleRender();
               }
             } catch (e) {
               // Partial JSON line

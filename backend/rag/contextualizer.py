@@ -25,7 +25,7 @@ FOLLOWUP_PHRASES = [
     "tell me more", "why so", "how so", "what about", "types of it", "previous one",
     "same topic", "above", "its advantages", "its disadvantages", "its types",
     "its features", "its applications", "how to use it", "why do we use it",
-    "give example"
+    "give example", "more details", "how does it work"
 ]
 
 
@@ -40,10 +40,10 @@ def is_greeting(question: str) -> bool:
 def is_follow_up_question(question: str) -> bool:
     """
     Fast, lightweight heuristic to check if a question is a follow-up.
-    Returns True if the question contains pronouns or referential phrases.
+    Returns True if the question contains referential pronouns or phrases.
     Returns False if the question is standalone or a greeting.
     """
-    if not question:
+    if not question or not question.strip():
         return False
 
     if is_greeting(question):
@@ -63,18 +63,13 @@ def is_follow_up_question(question: str) -> bool:
     if words.intersection(FOLLOWUP_PRONOUNS):
         return True
 
-    # Very short queries (< 4 words) without defining question starters like 'what is', 'explain', 'define'
-    if len(words) <= 3 and not any(q_lower.startswith(prefix) for prefix in ["what is ", "explain ", "define ", "describe ", "list "]):
-        return True
-
     return False
 
 
 def rewrite_question_with_history(current_question: str, history: Optional[List[Dict[str, str]]] = None) -> str:
     """
-    Rewrites the latest user question into a standalone question using conversation history.
-    
-    If history is empty, missing, or question is standalone / greeting, returns current_question unchanged immediately.
+    Rewrites the user question into a standalone question using conversation history.
+    If history is empty or question is standalone / greeting, returns current_question unchanged immediately.
     """
     if not current_question or not current_question.strip():
         return current_question
@@ -86,66 +81,29 @@ def rewrite_question_with_history(current_question: str, history: Optional[List[
 
     # FAST PATH: Skip LLM call if question is standalone or greeting!
     if not is_follow_up_question(current_question_clean):
-        print(f"[Contextualizer] Fast path: '{current_question_clean}' is standalone/greeting. Skipping LLM rewrite.")
         return current_question_clean
 
-    # Format history for prompt (limit to recent 3 exchanges)
-    history_lines = []
-    for item in history[-3:]:
-        q = item.get("question", "").strip()
-        a = item.get("answer", "").strip()
-        if q:
-            history_lines.append(f"User: {q}")
-        if a:
-            history_lines.append(f"Assistant: {a[:200]}")
-
-    conversation_history = "\n".join(history_lines).strip()
-    if not conversation_history:
-        return current_question_clean
-
-    llm = get_llm()
+    # Use ultra-fast flash-lite model for quick question contextualization
+    llm = get_llm(model_override="gemini-2.5-flash-lite")
     if not llm:
-        print("[Contextualizer] LLM unavailable. Using original question.")
         return current_question_clean
 
-    prompt = f"""You are a question contextualizer for VTUva, an AI study assistant.
+    # Format last 1 exchange for minimum token count and maximum speed
+    recent_item = history[-1]
+    q = recent_item.get("question", "").strip()
+    a = recent_item.get("answer", "").strip()[:100]
+    conversation_history = f"User: {q}\nAssistant: {a}"
 
-Your task is to rewrite the user's latest question into a standalone question using the conversation history.
-
-Rules:
-- Do not answer the question.
-- Do not add information that is not supported by the conversation.
-- Resolve pronouns such as "it", "this", "that", "they", and "them" when the reference is clear.
-- Resolve phrases such as "previous one", "same topic", "above", "explain more", "why", "how", and "give an example".
-- If the question is already standalone, return it unchanged.
-- Preserve the user's intent.
-- Return ONLY the rewritten question.
-- Do not add explanations or formatting.
-
-Conversation history:
+    prompt = f"""Rewrite latest user question into a standalone question using context.
+History:
 {conversation_history}
-
-Latest user question:
-{current_question_clean}
-"""
+Question: {current_question_clean}
+Standalone Question:"""
 
     try:
         response = llm.invoke(prompt)
-        rewritten = extract_text_from_chunk(response).strip() if response else current_question_clean
-
-        if rewritten.startswith('```') and rewritten.endswith('```'):
-            rewritten = rewritten.strip('`').strip()
-            if rewritten.startswith('python') or rewritten.startswith('text'):
-                lines = rewritten.split('\n', 1)
-                rewritten = lines[1] if len(lines) > 1 else rewritten
-        
-        rewritten = rewritten.strip('"\'')
-
-        print("\n--- Question Contextualizer ---")
-        print(f"Original question: {current_question_clean}")
-        print(f"Rewritten question: {rewritten}")
-        print("-------------------------------\n")
-
+        content = extract_text_from_chunk(response) if response else current_question_clean
+        rewritten = content.strip().strip('"\'`') if content else current_question_clean
         return rewritten if rewritten else current_question_clean
     except Exception as e:
         print(f"[Contextualizer Error] Failed to rewrite question: {e}")
