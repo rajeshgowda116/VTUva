@@ -134,20 +134,26 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
     def event_generator():
         t_start = time.perf_counter()
 
-        # 1. Fetch recent chat history from SQL (last 3 exchanges)
+        # 1. Fetch chat history (use request payload history if provided, or fallback to SQL DB)
         t_hist_start = time.perf_counter()
-        recent_records = (
-            db.query(ChatHistory)
-            .filter(ChatHistory.user_id == user_id)
-            .order_by(ChatHistory.id.desc())
-            .limit(3)
-            .all()
-        )
-        recent_records.reverse()
-        history = [
-            {"question": record.question, "answer": record.answer}
-            for record in recent_records
-        ]
+        if data.history and isinstance(data.history, list) and len(data.history) > 0:
+            history = [
+                {"question": str(h.get("question", "")), "answer": str(h.get("answer", ""))}
+                for h in data.history if isinstance(h, dict)
+            ]
+        else:
+            recent_records = (
+                db.query(ChatHistory)
+                .filter(ChatHistory.user_id == user_id)
+                .order_by(ChatHistory.id.desc())
+                .limit(4)
+                .all()
+            )
+            recent_records.reverse()
+            history = [
+                {"question": record.question, "answer": record.answer}
+                for record in recent_records
+            ]
         t_hist = time.perf_counter() - t_hist_start
 
         # 2. Context rewriting & Vector Search (k=4)
@@ -158,14 +164,19 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
         # Send initial metadata (sources) immediately
         yield f"data: {json.dumps({'type': 'sources', 'sources': sources, 'standalone_question': standalone_question})}\n\n"
 
-        if context == "__GREETING__":
-            greeting_msg = "Hello! I am VTUva, your VTU engineering study assistant. How can I help you with your VTU subjects, notes, or syllabus today?"
-            yield f"data: {json.dumps({'type': 'token', 'token': greeting_msg})}\n\n"
+        if context and context.startswith("__") and context.endswith("__"):
+            intent_key = context.strip("_")
+            try:
+                from backend.rag.pipeline import CASUAL_RESPONSES
+            except ImportError:
+                from rag.pipeline import CASUAL_RESPONSES
+            casual_msg = CASUAL_RESPONSES.get(intent_key, "Glad to help! 😊 Ask me anything about your VTU subjects.")
+            yield f"data: {json.dumps({'type': 'token', 'token': casual_msg})}\n\n"
             try:
                 chat_record = ChatHistory(
                     user_id=user_id,
                     question=question_text,
-                    answer=greeting_msg,
+                    answer=casual_msg,
                     created_at=datetime.utcnow()
                 )
                 db.add(chat_record)
@@ -180,20 +191,26 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
             return
 
         if not context:
-            no_info_msg = "No relevant information found in the VTU documents."
+            no_info_msg = "I couldn't find enough information about that in my current VTU knowledge base."
             yield f"data: {json.dumps({'type': 'token', 'token': no_info_msg})}\n\n"
             
             # Save record to SQL
-            chat_record = ChatHistory(
-                user_id=user_id,
-                question=question_text,
-                answer=no_info_msg,
-                created_at=datetime.utcnow()
-            )
-            db.add(chat_record)
-            db.commit()
-            yield f"data: {json.dumps({'type': 'done', 'id': chat_record.id})}\n\n"
+            try:
+                chat_record = ChatHistory(
+                    user_id=user_id,
+                    question=question_text,
+                    answer=no_info_msg,
+                    created_at=datetime.utcnow()
+                )
+                db.add(chat_record)
+                db.commit()
+                rec_id = chat_record.id
+            except Exception:
+                db.rollback()
+                rec_id = 0
+            yield f"data: {json.dumps({'type': 'done', 'id': rec_id})}\n\n"
             return
+
 
         # 3. Stream LLM Answer Generation
         full_answer_chunks = []

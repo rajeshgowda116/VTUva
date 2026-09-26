@@ -141,6 +141,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sendBtn?.addEventListener('click', handleSend);
 
+  // Helper to extract active chat conversation context for multi-turn follow-ups
+  function getCurrentChatContext() {
+    const history = [];
+    if (!messagesList) return history;
+    const wrappers = messagesList.querySelectorAll('.message-wrapper');
+    let lastUserQ = null;
+    wrappers.forEach(w => {
+      if (w.classList.contains('user')) {
+        const txt = w.querySelector('.user-bubble span')?.innerText || '';
+        if (txt) lastUserQ = txt;
+      } else if (w.classList.contains('assistant')) {
+        const txt = w.querySelector('.text-stream')?.innerText || '';
+        if (lastUserQ && txt) {
+          history.push({ question: lastUserQ, answer: txt });
+          lastUserQ = null;
+        }
+      }
+    });
+    return history.slice(-4);
+  }
+
   // 7. SEND MESSAGE & POST /api/chat INTEGRATION
   function handleSend() {
     const text = chatInput.value.trim();
@@ -148,6 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Switch to Chat View
     switchView('chat');
+
+    const historyContext = getCurrentChatContext();
 
     // Append User Bubble
     const userWrapper = document.createElement('div');
@@ -165,10 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
     // Fetch Answer from FastAPI RAG Backend and save to MySQL
-    fetchRAGAnswer(text);
+    fetchRAGAnswer(text, historyContext);
   }
 
-  async function fetchRAGAnswer(promptText) {
+  async function fetchRAGAnswer(promptText, historyContext = []) {
     isStreaming = true;
 
     // Create Assistant Bubble with Loading Spinner
@@ -203,8 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'X-User-ID': currentUserId,
         },
-        body: JSON.stringify({ question: promptText }),
+        body: JSON.stringify({ question: promptText, history: historyContext }),
       });
+
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));

@@ -26,7 +26,9 @@ except ImportError:
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+# Project Directory Paths
 DATA_PATH = ROOT_DIR / "data"
+PREV_QUESTIONS_PATH = ROOT_DIR / "prev_qustions"
 PROCESSED_FILE = Path(__file__).resolve().parent / "processed_files.json"
 
 def calculate_hash(file_path):
@@ -50,39 +52,49 @@ def save_processed_files(processed):
         json.dump(processed, f, indent=4)
 
 def process_and_summarize_pyqs():
+    """
+    Scans prev_qustions/ directory for Question Paper PDFs across ALL subjects,
+    parses questions using PYQProcessor, clusters repetitions per subject code, 
+    and ingests metadata summaries into ChromaDB.
+    """
     processor = PYQProcessor()
-    pdf_files = list(DATA_PATH.rglob("*.pdf"))
+    
+    # Collect all PDFs from prev_qustions directory (and data/prev_qustions if present)
+    pyq_files = list(PREV_QUESTIONS_PATH.rglob("*.pdf")) if PREV_QUESTIONS_PATH.exists() else []
+    if DATA_PATH.exists():
+        pyq_files.extend(list(DATA_PATH.rglob("*prev_qustion*.pdf")))
+        pyq_files.extend(list(DATA_PATH.rglob("*pyq*.pdf")))
+
+    # Deduplicate
+    pyq_files = list(set(pyq_files))
+    print(f"📄 Found {len(pyq_files)} PYQ Paper PDFs in prev_qustions directory.")
     
     subject_questions = {}
     pyq_docs = []
 
-    for pdf_path in pdf_files:
-        filename = pdf_path.name.lower()
-        is_pyq = "dec" in filename or "jan" in filename or "june" in filename or "july" in filename or "model" in filename or "prev_qustions" in str(pdf_path) or "pyq" in str(pdf_path)
-        
-        if is_pyq:
-            print(f"[PYQ Paper] Processing: {pdf_path.name}")
-            try:
-                result = processor.process_paper(str(pdf_path))
-                subj_code = result["metadata"]["subject_code"]
-                if subj_code not in subject_questions:
-                    subject_questions[subj_code] = []
-                
-                for q in result["questions"]:
-                    q["paper_label"] = result["metadata"]["filename"]
-                    subject_questions[subj_code].append(q)
+    for pdf_path in pyq_files:
+        print(f"[PYQ Processor] Parsing Paper: {pdf_path.name}")
+        try:
+            result = processor.process_paper(str(pdf_path))
+            subj_code = result["metadata"]["subject_code"]
+            if subj_code not in subject_questions:
+                subject_questions[subj_code] = []
+            
+            for q in result["questions"]:
+                q["paper_label"] = result["metadata"]["filename"]
+                subject_questions[subj_code].append(q)
 
-                rel_path = str(pdf_path.relative_to(ROOT_DIR)) if ROOT_DIR in pdf_path.parents else pdf_path.name
-                pyq_docs.append({
-                    "text": f"Subject {subj_code} Previous Question Paper ({result['metadata']['filename']}):\n\n{result['raw_markdown']}",
-                    "page": 1,
-                    "source": rel_path
-                })
-            except Exception as e:
-                print(f"[Warning] Error parsing PYQ {pdf_path.name}: {e}")
+            rel_path = str(pdf_path.relative_to(ROOT_DIR)) if ROOT_DIR in pdf_path.parents else pdf_path.name
+            pyq_docs.append({
+                "text": f"Subject {subj_code} Question Paper ({result['metadata']['filename']}):\n\n{result['raw_markdown']}",
+                "page": 1,
+                "source": rel_path
+            })
+        except Exception as e:
+            print(f"[Warning] Error parsing PYQ {pdf_path.name}: {e}")
 
     if subject_questions:
-        print("[Analysis] Running Semantic Similarity Analysis across ALL subjects...")
+        print("🧠 Running Semantic Similarity Analysis on prev_qustions...")
         model = SentenceTransformer("all-MiniLM-L6-v2")
 
         for subj_code, qs in subject_questions.items():
@@ -115,7 +127,7 @@ def process_and_summarize_pyqs():
                     "papers": unique_papers
                 })
 
-            summary_text = f"Subject {subj_code} - Frequently Asked & Repeated Questions Analysis:\n\n"
+            summary_text = f"Subject {subj_code} - Frequently Asked & Repeated Questions Analysis (from prev_qustions):\n\n"
             groups.sort(key=lambda g: g["frequency"], reverse=True)
 
             for g in groups:
@@ -130,15 +142,16 @@ def process_and_summarize_pyqs():
 
     if pyq_docs:
         add_documents(pyq_docs)
-        print(f"[Complete] Ingested {len(pyq_docs)} PYQ document chunks across all subjects into ChromaDB!")
+        print(f"[Complete] Ingested {len(pyq_docs)} PYQ document chunks from prev_qustions into ChromaDB!")
 
 def ingest():
     processed = load_processed_files()
-    pdf_files = list(DATA_PATH.rglob("*.pdf"))
+    
+    # 1. Standard Notes/Textbook Ingestion from data/
+    notes_files = list(DATA_PATH.rglob("*.pdf")) if DATA_PATH.exists() else []
+    print(f"Notes/Study PDF files found in data directory: {len(notes_files)}")
 
-    print(f"PDF files found in data directory: {len(pdf_files)}")
-
-    for pdf_file in pdf_files:
+    for pdf_file in notes_files:
         file_hash = calculate_hash(pdf_file)
         file_key = str(pdf_file)
 
@@ -146,7 +159,7 @@ def ingest():
             print(f"[Skipping] Already ingested: {pdf_file.name}")
             continue
 
-        print(f"[Loading] PDF: {pdf_file.name}")
+        print(f"[Loading] Notes PDF: {pdf_file.name}")
         try:
             documents = list(lazy_load_pdf(pdf_file))
             chunks = split_documents(documents)
@@ -159,6 +172,7 @@ def ingest():
         except Exception as e:
             print(f"[Warning] Error loading {pdf_file.name}: {e}")
 
+    # 2. PYQ Ingestion strictly from prev_qustions/
     process_and_summarize_pyqs()
 
 if __name__ == "__main__":

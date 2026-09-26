@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Generator
 from dotenv import load_dotenv
 
@@ -35,7 +36,7 @@ def get_llm(model_override: str = None):
     # 1. GOOGLE GEMINI API (Default High-Speed Cloud Provider)
     google_api_key = os.getenv("GOOGLE_API_KEY")
     if (provider == "gemini" or not provider) and google_api_key and google_api_key.strip():
-        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             _llm_instance = ChatGoogleGenerativeAI(
@@ -43,6 +44,7 @@ def get_llm(model_override: str = None):
                 google_api_key=google_api_key.strip(),
                 temperature=0
             )
+
             print(f"[INIT] Gemini Fast LLM instance initialized ({model_name}).")
             return _llm_instance
         except Exception as e:
@@ -88,21 +90,45 @@ def get_llm(model_override: str = None):
 
 
 def build_prompt(question: str, context: str) -> str:
+    """
+    Strict RAG prompt builder:
+    - Instructs LLM to answer ONLY from retrieved CONTEXT chunks.
+    - If answer is not present in CONTEXT, LLM MUST reply clearly that it is not present in ingested VTU syllabus documents.
+    """
+    q_lower = question.lower().strip()
+    
+    is_list_intent = (
+        re.search(r"\b(list|give|show|what\s+are|get)\b", q_lower) and 
+        re.search(r"\b(question|questions|pyq|pyqs|important\s+questions|repeated\s+questions)\b", q_lower) and
+        not re.search(r"\b(explain|describe|solve|answer|solution|write\s+an?\s+answer)\b", q_lower)
+    )
+
+    if is_list_intent:
+        return f"""You are VTUva, a VTU engineering study assistant.
+
+STRICT CONSTRAINTS:
+1. Output ONLY information present in the CONTEXT.
+2. Provide a clean list of questions grouped logically.
+3. If CONTEXT does not contain questions for the requested topic, respond EXACTLY with:
+   "This topic is not present in the ingested VTU syllabus/notes documents."
+
+CONTEXT:
+{context}
+
+STUDENT QUESTION:
+{question}
+
+QUESTION LIST:
+"""
+
     return f"""You are VTUva, a VTU engineering study assistant.
 
-Answer the student's question using the information in CONTEXT.
-
-The student wants an exam-oriented answer.
-
-For a 10-mark question:
-- Give a clear introduction
-- Explain the important points
-- Include working/principle if available
-- Include equations/reactions if available in the context
-- Use headings and bullet points
-- Do not invent information
-
-If the context does not contain enough information, say so clearly.
+STRICT CONSTRAINTS & RULES:
+1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
+2. Do NOT use outside knowledge or invent answers if the specific topic/solution is not present in the CONTEXT.
+3. If the CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
+   "This topic is not present in the ingested VTU syllabus/notes documents."
+4. Use clean, exam-oriented markdown formatting.
 
 CONTEXT:
 {context}
@@ -132,6 +158,9 @@ def extract_text_from_chunk(chunk) -> str:
 
 
 def generate_answer(question: str, context: str) -> str:
+    if not context or not context.strip():
+        return "This topic is not present in the ingested VTU syllabus/notes documents."
+
     llm = get_llm()
     if not llm:
         return (
@@ -155,6 +184,10 @@ def generate_answer(question: str, context: str) -> str:
 
 def generate_answer_stream(question: str, context: str) -> Generator[str, None, None]:
     """Yields generated tokens one by one as they arrive from the LLM."""
+    if not context or not context.strip():
+        yield "This topic is not present in the ingested VTU syllabus/notes documents."
+        return
+
     llm = get_llm()
     if not llm:
         yield (

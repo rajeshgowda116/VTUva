@@ -11,28 +11,30 @@ class PYQProcessor:
     """
     Universal PYQ Processing Pipeline for ALL VTU Subjects:
     1. Generic Subject & Metadata Extraction from Path & PDF Header
-    2. Docling PDF Conversion
+    2. Docling PDF Conversion (with JSON caching)
     3. Regex Question Parser, Cleaning & Module Tracking
     """
 
     def __init__(self, output_dir: str = "data/pyq_processed"):
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
-        self.converter = DocumentConverter()
+        self.converter = None  # Lazy-initialize Docling only when needed
+
+    def _get_converter(self) -> DocumentConverter:
+        if self.converter is None:
+            self.converter = DocumentConverter()
+        return self.converter
 
     @staticmethod
     def extract_metadata_from_path(pdf_path: str) -> Dict[str, Any]:
         filename = os.path.basename(pdf_path)
         
-        # Generic VTU Course Code regex: e.g. BCS501, BCHEC102, 21CS51, BMAT101, etc.
         code_match = re.search(r"([A-Z]{2,5}\d{2,4}|21[A-Z]{2,3}\d{2}|18[A-Z]{2,3}\d{2})", filename, re.IGNORECASE)
         subject_code = code_match.group(1).upper() if code_match else "UNKNOWN_SUBJECT"
 
-        # Year regex: e.g. 2024, 2025, 2023
         year_match = re.search(r"(20\d{2})", filename)
         year = int(year_match.group(1)) if year_match else 2024
 
-        # Branch estimation from code prefix (e.g. BCS -> CSE, BEC -> ECE, BME -> ME, BCHEC -> CHE)
         branch = "ENGINEERING"
         if subject_code.startswith("BCS") or subject_code.startswith("CS"):
             branch = "CSE"
@@ -51,7 +53,6 @@ class PYQProcessor:
         elif "model" in filename.lower():
             session = "Model Question Paper"
 
-        # Check folder structure e.g. data/pyq/CSE/DBMS/2024.pdf
         parts = os.path.normpath(pdf_path).split(os.sep)
         if len(parts) >= 4 and parts[-4].lower() in ["pyq", "pyqs", "prev_qustions"]:
             branch = parts[-3]
@@ -68,14 +69,14 @@ class PYQProcessor:
 
     def convert_pdf_to_markdown(self, pdf_path: str) -> str:
         logger.info(f"Converting PDF with Docling: {pdf_path}")
-        result = self.converter.convert(pdf_path)
+        converter = self._get_converter()
+        result = converter.convert(pdf_path)
         return result.document.export_to_markdown()
 
     @staticmethod
     def clean_text(text: str) -> str:
         if not text:
             return ""
-        # Remove VTU timestamp watermarks
         text = re.sub(r"VTU-\d{2}-\d{2}-\d{4}", "", text, flags=re.IGNORECASE)
         text = re.sub(r"\d{2}:\d{2}:\d{2}\s*(?:am|pm)?", "", text, flags=re.IGNORECASE)
         text = re.sub(r"\bAD\b", "", text)
@@ -89,7 +90,6 @@ class PYQProcessor:
         current_module = 1
         current_main_q = ""
 
-        # Extract Subject Title & Subject Code from Document Header
         for line in lines[:15]:
             code_in_doc = re.search(r"Course\s*Code\s*[:\-]?\s*([A-Z0-9]+)", line, re.IGNORECASE)
             if code_in_doc:
@@ -176,8 +176,16 @@ class PYQProcessor:
 
         return questions
 
-    def process_paper(self, pdf_path: str) -> Dict[str, Any]:
+    def process_paper(self, pdf_path: str, force_reprocess: bool = False) -> Dict[str, Any]:
         metadata = self.extract_metadata_from_path(pdf_path)
+        out_name = f"{metadata['subject_code']}_{metadata['year']}_{os.path.basename(pdf_path)}.json"
+        out_path = os.path.join(self.output_dir, out_name)
+
+        if os.path.exists(out_path) and not force_reprocess:
+            logger.info(f"⚡ Loading cached parsed JSON for {os.path.basename(pdf_path)}")
+            with open(out_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+
         md_content = self.convert_pdf_to_markdown(pdf_path)
         questions = self.parse_questions_from_markdown(md_content, metadata)
 
@@ -188,8 +196,6 @@ class PYQProcessor:
             "questions": questions
         }
 
-        out_name = f"{metadata['subject_code']}_{metadata['year']}_{os.path.basename(pdf_path)}.json"
-        out_path = os.path.join(self.output_dir, out_name)
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(result_payload, f, indent=2)
 

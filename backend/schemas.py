@@ -5,6 +5,8 @@ from typing import Optional, List
 
 class ChatRequest(BaseModel):
     question: str
+    history: Optional[List[dict]] = None
+
 
 
 class ChatResponse(BaseModel):

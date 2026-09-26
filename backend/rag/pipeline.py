@@ -1,18 +1,34 @@
 import time
+import re
 from pathlib import Path
 from typing import Generator, Tuple, List, Dict, Any
 
 try:
+    from backend.app.chat.intent import detect_intent
+except ImportError:
+    try:
+        from app.chat.intent import detect_intent
+    except ImportError:
+        def detect_intent(msg: str) -> str:
+            return "UNKNOWN"
+
+try:
     from .retriever import get_retriever
     from .generate import generate_answer, generate_answer_stream
-    from .contextualizer import rewrite_question_with_history, is_greeting
+    from .contextualizer import rewrite_question_with_history
 except ImportError:
     from retriever import get_retriever
     from generate import generate_answer, generate_answer_stream
-    from contextualizer import rewrite_question_with_history, is_greeting
+    from contextualizer import rewrite_question_with_history
 
 
-GREETING_RESPONSE = "Hello! I am VTUva, your VTU engineering study assistant. How can I help you with your VTU subjects, notes, or syllabus today?"
+CASUAL_RESPONSES = {
+    "GREETING": "Hey! 👋 What are you studying today?",
+    "CASUAL_THANKS": "You're welcome! Good luck with your studies!",
+    "CASUAL_GOOD": "Glad that helped! 😊",
+    "CASUAL_OK": "Sure! Ask me whenever you're ready.",
+    "CASUAL": "Glad to help! 😊 Ask me anything about your VTU subjects."
+}
 
 
 def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
@@ -30,9 +46,19 @@ def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
                 "file_name": clean_name,
                 "page": page,
                 "snippet": snippet,
-                "file_path": f"/data/frist_sem/{clean_name}"
+                "file_path": f"/data/prev_qustions/{clean_name}"
             })
     return sources
+
+
+def enhance_pyq_search_query(question: str) -> str:
+    q_clean = question.strip()
+    is_pyq_intent = re.search(r"(repeat|repet|frequent|freq|most\s+asked|pyq|pyqs|previous\s+year)", q_clean, re.IGNORECASE)
+    has_course_code = re.search(r"([A-Z]{2,5}\d{2,4}|21[A-Z]{2,3}\d{2}|18[A-Z]{2,3}\d{2})", q_clean, re.IGNORECASE)
+
+    if is_pyq_intent and not has_course_code:
+        return f"{q_clean} PYQ Most Asked Questions Summary repeated questions BCS501 Software Engineering"
+    return q_clean
 
 
 def ask_question(question: str, history=None) -> Dict[str, Any]:
@@ -43,22 +69,25 @@ def ask_question(question: str, history=None) -> Dict[str, Any]:
 
     q_clean = question.strip()
 
-    # Fast Path for Greetings
-    if is_greeting(q_clean):
+    # Step 1 Intent Router Check
+    intent = detect_intent(q_clean)
+
+    if intent in CASUAL_RESPONSES:
         return {
-            "answer": GREETING_RESPONSE,
+            "answer": CASUAL_RESPONSES[intent],
             "sources": []
         }
 
-    # 1. Context Rewriting
+    # Only UNKNOWN continues to RAG search
     t_rewrite_start = time.perf_counter()
     standalone_question = rewrite_question_with_history(q_clean, history) if history else q_clean
     t_rewrite = time.perf_counter() - t_rewrite_start
 
-    # 2. Vector Retrieval (k=4)
+    search_query = enhance_pyq_search_query(standalone_question)
+
     t_vector_start = time.perf_counter()
     retriever = get_retriever(k=4)
-    docs = retriever.invoke(standalone_question)
+    docs = retriever.invoke(search_query)
     t_vector = time.perf_counter() - t_vector_start
 
     sources = extract_sources(docs)
@@ -66,9 +95,8 @@ def ask_question(question: str, history=None) -> Dict[str, Any]:
     if not docs:
         t_total = time.perf_counter() - t_start
         print(f"\n[PERF TIMING] Rewrite: {t_rewrite:.3f}s | Vector Search: {t_vector:.3f}s | TOTAL: {t_total:.3f}s")
-        return {"answer": "No relevant information found in the VTU documents.", "sources": []}
+        return {"answer": "I couldn't find enough information about that in my current VTU knowledge base.", "sources": []}
 
-    # 3. LLM Generation
     t_llm_start = time.perf_counter()
     context = "\n\n".join(doc.page_content for doc in docs)
     answer = generate_answer(standalone_question, context)
@@ -92,16 +120,20 @@ def prepare_rag_context(question: str, history=None) -> Tuple[str, List[Dict[str
     """Helper to prepare standalone question, sources, and context for streaming."""
     q_clean = question.strip() if question else ""
 
-    if is_greeting(q_clean):
-        return q_clean, [], "__GREETING__", 0.0, 0.0
+    intent = detect_intent(q_clean)
+
+    if intent in CASUAL_RESPONSES:
+        return q_clean, [], f"__{intent}__", 0.0, 0.0
 
     t_rewrite_start = time.perf_counter()
     standalone_question = rewrite_question_with_history(q_clean, history) if history else q_clean
     t_rewrite = time.perf_counter() - t_rewrite_start
 
+    search_query = enhance_pyq_search_query(standalone_question)
+
     t_vector_start = time.perf_counter()
     retriever = get_retriever(k=4)
-    docs = retriever.invoke(standalone_question)
+    docs = retriever.invoke(search_query)
     t_vector = time.perf_counter() - t_vector_start
 
     sources = extract_sources(docs)
