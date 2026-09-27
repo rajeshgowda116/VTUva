@@ -75,16 +75,6 @@ def is_follow_up_question(question: str, history: Optional[List[Dict[str, str]]]
     if words.intersection(FOLLOWUP_PRONOUNS):
         return True
 
-    # If question lacks course code and is relatively short (< 8 words), or starts with relative conjunctions/verbs
-    if not has_course_code:
-        if len(words) <= 7:
-            return True
-        if re.match(r"^(what|how|why|explain|describe|give|list|show|and|or|also)\b", q_lower):
-            # Check if history contains a specific subject context (like BCS502, BFS, DBMS, etc.)
-            last_q = history[-1].get("question", "").lower()
-            if any(kw in last_q or kw in history[-1].get("answer", "").lower() for kw in ["bcs", "module", "bfs", "dfs", "dbms", "os", "algorithm", "normalization"]):
-                return True
-
     return False
 
 

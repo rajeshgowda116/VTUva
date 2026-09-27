@@ -6,6 +6,9 @@ from pathlib import Path
 from datetime import datetime
 from contextlib import asynccontextmanager
 
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+
 # Add project root and backend folder to sys.path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR))

@@ -161,6 +161,24 @@ def generate_answer(question: str, context: str) -> str:
     if not context or not context.strip():
         return "This topic is not present in the ingested VTU syllabus/notes documents."
 
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if google_api_key and google_api_key.strip():
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=google_api_key.strip())
+            prompt = build_prompt(question, context)
+            models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-1.5-flash-8b"]
+            for m in models:
+                try:
+                    res = client.models.generate_content(model=m, contents=prompt)
+                    if res and res.text:
+                        return res.text.strip()
+                except Exception as m_err:
+                    print(f"[Fast Fallback] Model '{m}' failed/rate-limited: {m_err}. Trying next model...")
+                    continue
+        except Exception as genai_err:
+            print(f"[GenAI Client Error] Fallback to LangChain LLM: {genai_err}")
+
     llm = get_llm()
     if not llm:
         return (
@@ -171,43 +189,53 @@ def generate_answer(question: str, context: str) -> str:
         )
 
     prompt = build_prompt(question, context)
-
     try:
         response = llm.invoke(prompt)
         return extract_text_from_chunk(response)
     except Exception as e:
-        err_msg = str(e)
-        if "connection" in err_msg.lower() or "connect" in err_msg.lower() or "11434" in err_msg:
-            return f"⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`."
-        return f"⚠️ Error generating answer from LLM API: {err_msg}"
+        return f"⚠️ Error generating answer: {e}"
 
 
 def generate_answer_stream(question: str, context: str) -> Generator[str, None, None]:
-    """Yields generated tokens one by one as they arrive from the LLM."""
+    """Yields generated tokens one by one with fast zero-sleep fallback."""
     if not context or not context.strip():
         yield "This topic is not present in the ingested VTU syllabus/notes documents."
         return
 
+    google_api_key = os.getenv("GOOGLE_API_KEY")
+    if google_api_key and google_api_key.strip():
+        try:
+            import google.genai as genai
+            client = genai.Client(api_key=google_api_key.strip())
+            prompt = build_prompt(question, context)
+            models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-1.5-flash-8b"]
+            
+            for m in models:
+                try:
+                    res_stream = client.models.generate_content_stream(model=m, contents=prompt)
+                    has_tokens = False
+                    for chunk in res_stream:
+                        if chunk.text:
+                            has_tokens = True
+                            yield chunk.text
+                    if has_tokens:
+                        return
+                except Exception as m_err:
+                    print(f"[Fast Stream Fallback] Model '{m}' rate-limited/failed: {m_err}. Switching immediately...")
+                    continue
+        except Exception as genai_err:
+            print(f"[GenAI Direct Stream Error] Fallback to LangChain LLM: {genai_err}")
+
     llm = get_llm()
     if not llm:
-        yield (
-            "⚠️ **LLM Provider Configuration Missing**\n\n"
-            "Please set `GOOGLE_API_KEY` in your `.env` file at the root of the project."
-        )
+        yield "⚠️ **LLM Provider Configuration Missing**: Please set `GOOGLE_API_KEY` in `.env`."
         return
 
     prompt = build_prompt(question, context)
-
     try:
         for chunk in llm.stream(prompt):
             text_chunk = extract_text_from_chunk(chunk)
             if text_chunk:
                 yield text_chunk
     except Exception as e:
-        err_msg = str(e)
-        if "connection" in err_msg.lower() or "connect" in err_msg.lower() or "11434" in err_msg:
-            yield f"\n\n⚠️ **Ollama Connection Error**: Could not connect to local Ollama server at `{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}`."
-        elif "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "rate_limit" in err_msg.lower():
-            yield "\n\n⚠️ **API Rate Limit Reached (429)**: Free tier limit reached. Please retry in a few seconds."
-        else:
-            yield f"\n\n⚠️ Error generating stream from LLM: {err_msg}"
+        yield f"\n\n⚠️ Error generating stream from LLM: {e}"
