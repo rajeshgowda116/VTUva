@@ -23,11 +23,60 @@ except ImportError:
 
 
 CASUAL_RESPONSES = {
+
+    # Greetings
     "GREETING": "Hey! 👋 What are you studying today?",
-    "CASUAL_THANKS": "You're welcome! Good luck with your studies!",
+    "GREETING_MORNING": "Good morning! ☀️ Ready to study?",
+    "GREETING_AFTERNOON": "Good afternoon! 👋 What VTU topic are we working on?",
+    "GREETING_EVENING": "Good evening! 🌙 What would you like to study?",
+    "GREETING_NIGHT": "Good night! 🌙 Don't forget to get some rest after studying!",
+
+    # Thanks
+    "CASUAL_THANKS": "You're welcome! 😊 Good luck with your studies!",
+    "CASUAL_THANKS_2": "Anytime! 📚 I'm here whenever you need help.",
+    "CASUAL_THANKS_3": "You're welcome! Keep learning! 🚀",
+
+    # Positive feedback
     "CASUAL_GOOD": "Glad that helped! 😊",
-    "CASUAL_OK": "Sure! Ask me whenever you're ready.",
-    "CASUAL": "Glad to help! 😊 Ask me anything about your VTU subjects."
+    "CASUAL_GREAT": "Awesome! 🚀 Keep going!",
+    "CASUAL_NICE": "Glad you liked it! 😊",
+    "CASUAL_PERFECT": "Great! 👍 Let's keep going.",
+
+    # OK / acknowledgement
+    "CASUAL_OK": "Sure! 👍 Ask me whenever you're ready.",
+    "CASUAL_GOT_IT": "Perfect! 👍",
+    "CASUAL_UNDERSTOOD": "Great! 😊 Let's move to the next topic.",
+    "CASUAL_SURE": "Sure! What would you like to know?",
+
+    # Goodbye
+    "CASUAL_BYE": "Bye! 👋 Good luck with your studies!",
+    "CASUAL_GOODBYE": "See you! 📚 Keep learning and all the best!",
+    "CASUAL_SEE_YOU": "See you later! 👋",
+
+    # General casual
+    "CASUAL": "Glad to help! 😊 Ask me anything about your VTU subjects.",
+    "CASUAL_HELP": "Of course! 📚 What VTU topic do you need help with?",
+    "CASUAL_READY": "I'm ready! 🚀 Send me your question.",
+    "CASUAL_START": "Let's get started! 📖 What's your question?",
+    "CASUAL_CONTINUE": "Absolutely! 👍 What's next?",
+    "CASUAL_MORE": "Sure! Tell me what you'd like to explore next.",
+
+    # Encouragement
+    "CASUAL_MOTIVATION": "You've got this! 💪 Keep going.",
+    "CASUAL_STUDY": "Let's make some progress today! 📚",
+    "CASUAL_EXAM": "Stay focused and keep practicing! 💪📖",
+    "CASUAL_CONFIDENT": "Nice! Keep building your understanding step by step. 🚀",
+
+    # Identity
+    "WHO_ARE_YOU": "I'm VTUva, your AI study assistant for VTU subjects. 🤖📚",
+    "WHAT_IS_VTUVA": "I'm VTUva — an AI study assistant designed to help with VTU subjects, concepts, and exam preparation. 📚",
+
+    # When user asks for help
+    "NEED_HELP": "Of course! 😊 Send me the topic or question you're working on.",
+    "CAN_YOU_HELP": "Absolutely! 📚 Ask your VTU question and I'll help you understand it.",
+
+    # Default
+    "DEFAULT": "I'm here to help! 😊 Ask me a question about your VTU studies."
 }
 
 

@@ -30,6 +30,8 @@ try:
     from backend.rag.generate import generate_answer_stream, get_llm
     from backend.rag.retriever import get_retriever, get_vector_store
     from backend.rag.embeddings import get_embeddings
+    from backend.scraper.api import router as scraper_router
+    from backend.scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
 except ImportError:
     from database import engine, Base, get_db, SessionLocal
     from models import ChatHistory
@@ -38,6 +40,8 @@ except ImportError:
     from rag.generate import generate_answer_stream, get_llm
     from rag.retriever import get_retriever, get_vector_store
     from rag.embeddings import get_embeddings
+    from scraper.api import router as scraper_router
+    from scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
 
 # Create database tables if they do not exist
 try:
@@ -66,12 +70,21 @@ def warmup_models():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application startup handler - launches background model pre-warming so server opens port 8000 instantly."""
+    """Application startup handler - launches background model pre-warming and 12-hour scraper scheduler."""
     asyncio.create_task(asyncio.to_thread(warmup_models))
+    try:
+        start_scraper_scheduler()
+    except Exception as sched_err:
+        print(f"[Lifespan Warning] Could not start scraper scheduler: {sched_err}")
     yield
+    try:
+        stop_scraper_scheduler()
+    except Exception:
+        pass
 
 
 app = FastAPI(title="VTUva API", lifespan=lifespan)
+app.include_router(scraper_router)
 
 # Enable CORS for frontend requests
 app.add_middleware(
@@ -89,36 +102,6 @@ import urllib.request
 @app.get("/api/health")
 def health_check():
     return {"status": "online", "message": "VTUva Backend API is running"}
-
-
-@app.get("/api/health/ollama")
-def ollama_health_check():
-    """Verifies whether the local Ollama server is reachable."""
-    base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
-    model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
-
-    try:
-        req = urllib.request.Request(f"{base_url}/api/tags", headers={"User-Agent": "VTUva-Backend"})
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            if resp.status == 200:
-                data = json.loads(resp.read().decode("utf-8"))
-                models = [m.get("name") for m in data.get("models", [])]
-                return {
-                    "status": "online",
-                    "provider": "ollama",
-                    "base_url": base_url,
-                    "configured_model": model_name,
-                    "available_models": models
-                }
-    except Exception:
-        return {
-            "status": "offline",
-            "provider": "ollama",
-            "base_url": base_url,
-            "configured_model": model_name,
-            "message": f"Could not connect to Ollama server at {base_url}. Ensure Ollama is running (`ollama serve`)."
-        }
-
 
 @app.post("/api/chat/stream")
 def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(get_db)):
