@@ -2,25 +2,25 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from langchain_core.documents import Document
 
-from backend.models import ScrapedDocument
-from backend.scraper.cleaner import clean_html_content, clean_text_content
-from backend.scraper.metadata import extract_metadata
-
 try:
+    from backend.database import SessionLocal
+    from backend.models import ScrapedDocument
     from backend.rag.retriever import get_vector_store
     from backend.rag.splitter import split_documents
 except ImportError:
+    from database import SessionLocal
+    from models import ScrapedDocument
     from rag.retriever import get_vector_store
     from rag.splitter import split_documents
+
+from .cleaner import clean_html_content, clean_text_content
+from .metadata import extract_metadata
 
 
 def process_changed_documents(db: Session, changed_docs: List[ScrapedDocument]) -> int:
     """
     Cleans, extracts metadata, chunks, and ingests changed (NEW and UPDATED) documents
     into the existing VTUva ChromaDB vector store.
-    
-    Replaces old vector records for UPDATED documents to prevent duplicate chunks.
-    Updates processing_status to 'PROCESSED' in SQL.
     """
     if not changed_docs:
         print("[RAG Processor] No changed documents to process.")
@@ -69,7 +69,6 @@ def process_changed_documents(db: Session, changed_docs: List[ScrapedDocument]) 
             # 4. If UPDATED document: purge old vector records for this document
             if doc.status == "UPDATED":
                 try:
-                    # Delete old vector documents by url metadata match
                     if hasattr(vector_store, "_collection") and vector_store._collection:
                         vector_store._collection.delete(where={"url": doc.url})
                         print(f"   [VectorDB] Purged previous vector chunks for URL: {doc.url}")

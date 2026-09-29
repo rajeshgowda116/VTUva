@@ -2,7 +2,7 @@ import re
 from urllib.parse import urlparse, urljoin, urlunparse, parse_qsl, urlencode
 from typing import List, Set
 from bs4 import BeautifulSoup
-from backend.scraper.config import ScraperConfig, default_config
+from .config import ScraperConfig, default_config
 
 
 def normalize_url(url: str, base_url: str = None) -> str:
@@ -24,13 +24,11 @@ def normalize_url(url: str, base_url: str = None) -> str:
     scheme = parsed.scheme.lower()
     netloc = parsed.netloc.lower()
     
-    # Strip default ports if included
     if ":" in netloc:
         host, port = netloc.split(":", 1)
         if (scheme == "http" and port == "80") or (scheme == "https" and port == "443"):
             netloc = host
 
-    # Normalize path: collapse multiple slashes, remove trailing slash if path > 1 char
     path = parsed.path
     if path:
         path = re.sub(r"/{2,}", "/", path)
@@ -39,11 +37,9 @@ def normalize_url(url: str, base_url: str = None) -> str:
     else:
         path = "/"
 
-    # Sort query parameters for consistent canonical representation
     query = ""
     if parsed.query:
         query_tuples = parse_qsl(parsed.query, keep_blank_values=True)
-        # Filter out common tracking / session params
         filtered_tuples = [
             (k, v) for k, v in query_tuples
             if k.lower() not in {"utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "phpsessid", "sid"}
@@ -52,7 +48,6 @@ def normalize_url(url: str, base_url: str = None) -> str:
             filtered_tuples.sort(key=lambda x: x[0])
             query = urlencode(filtered_tuples)
 
-    # Reconstruct without fragment
     normalized = urlunparse((scheme, netloc, path, parsed.params, query, ""))
     return normalized
 
@@ -79,17 +74,14 @@ def is_allowed_url(url: str, config: ScraperConfig = default_config) -> bool:
 
     path = parsed.path.lower()
     
-    # Check blocked paths
     for blocked in config.blocked_paths:
         if blocked.lower() in path:
             return False
 
-    # Check blocked extensions
     for ext in config.blocked_file_extensions:
         if path.endswith(ext.lower()):
             return False
 
-    # If file has an extension, check if allowed
     dot_pos = path.rfind(".")
     slash_pos = path.rfind("/")
     if dot_pos > slash_pos:

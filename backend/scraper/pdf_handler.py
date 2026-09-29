@@ -1,4 +1,5 @@
 import os
+import ssl
 import hashlib
 import asyncio
 from pathlib import Path
@@ -6,7 +7,8 @@ from typing import Dict, Any, Optional
 import urllib.request
 import urllib.error
 from pypdf import PdfReader
-from backend.scraper.config import ScraperConfig, default_config
+
+from .config import ScraperConfig, default_config
 
 
 def compute_bytes_hash(content_bytes: bytes) -> str:
@@ -24,7 +26,6 @@ async def download_and_parse_pdf(
     """
     config.pdf_save_dir.mkdir(parents=True, exist_ok=True)
     
-    # Generate filename based on URL hash to prevent collisions
     url_hash = hashlib.md5(pdf_url.encode("utf-8")).hexdigest()[:10]
     raw_filename = pdf_url.split("/")[-1].split("?")[0]
     if not raw_filename.endswith(".pdf"):
@@ -49,25 +50,27 @@ async def download_and_parse_pdf(
     }
 
     try:
-        # Download file using asyncio thread runner to prevent blocking loop
         def _download():
             req = urllib.request.Request(
                 pdf_url,
-                headers={"User-Agent": config.user_agent}
+                headers={
+                    "User-Agent": config.user_agent,
+                    "Accept": "application/pdf,*/*"
+                }
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
                 return resp.read()
 
         pdf_bytes = await asyncio.to_thread(_download)
         
-        # Save raw binary content to disk
         with open(file_path, "wb") as f:
             f.write(pdf_bytes)
 
-        # Compute content hash on raw PDF bytes
         result["content_hash"] = compute_bytes_hash(pdf_bytes)
 
-        # Extract text using pypdf
         def _extract_pdf_text():
             reader = PdfReader(file_path)
             extracted_pages = []

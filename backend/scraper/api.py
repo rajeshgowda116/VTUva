@@ -1,23 +1,17 @@
 import os
 from datetime import datetime
 from typing import List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Header, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
 try:
     from backend.database import get_db
     from backend.models import ScrapeRun, ScrapedDocument
-    from backend.scraper.scheduler import (
-        get_scheduler_status,
-        trigger_scrape_now
-    )
 except ImportError:
     from database import get_db
     from models import ScrapeRun, ScrapedDocument
-    from scraper.scheduler import (
-        get_scheduler_status,
-        trigger_scrape_now
-    )
+
+from .scheduler import get_scheduler_status, trigger_scrape_now
 
 router = APIRouter(prefix="/api/admin/scraper", tags=["Admin Scraper"])
 

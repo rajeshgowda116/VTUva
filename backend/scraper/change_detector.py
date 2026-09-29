@@ -1,9 +1,13 @@
 from datetime import datetime
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 
-from backend.models import ScrapedDocument, ScrapedDocumentVersion
-from backend.scraper.hasher import compute_content_hash
+try:
+    from backend.models import ScrapedDocument, ScrapedDocumentVersion
+except ImportError:
+    from models import ScrapedDocument, ScrapedDocumentVersion
+
+from .hasher import compute_content_hash
 
 
 def process_scraped_documents(
@@ -13,9 +17,6 @@ def process_scraped_documents(
 ) -> Dict[str, Any]:
     """
     Compares newly scraped raw document records against existing SQL records using SHA-256 hashes.
-    Performs SQL updates and creates version audit entries in scraped_document_versions.
-    
-    Returns a dictionary of statistics and collections of NEW, UPDATED, and UNCHANGED documents.
     """
     now = datetime.utcnow()
     
@@ -23,7 +24,6 @@ def process_scraped_documents(
     updated_docs: List[ScrapedDocument] = []
     unchanged_docs: List[ScrapedDocument] = []
     removed_docs: List[ScrapedDocument] = []
-    failed_docs: List[Dict[str, Any]] = []
 
     scraped_canonical_urls = set()
 
@@ -125,7 +125,7 @@ def process_scraped_documents(
                 updated_docs.append(existing_doc)
                 print(f"[CHANGE DETECTOR] UPDATED document detected: {url} (v{old_version} -> v{new_version})")
 
-    # 4. REMOVED Documents detection (optional, when doing full crawl)
+    # 4. REMOVED Documents detection
     if mark_removed_missing and scraped_canonical_urls:
         active_db_docs = (
             db.query(ScrapedDocument)

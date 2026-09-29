@@ -1,15 +1,19 @@
 import time
-import trace
 import traceback
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-from backend.database import SessionLocal
-from backend.models import ScrapeRun, ScrapedDocument
-from backend.scraper.config import ScraperConfig, default_config
-from backend.scraper.crawler import PlaywrightCrawler
-from backend.scraper.change_detector import process_scraped_documents
-from backend.scraper.processor import process_changed_documents
+try:
+    from backend.database import SessionLocal
+    from backend.models import ScrapeRun, ScrapedDocument
+except ImportError:
+    from database import SessionLocal
+    from models import ScrapeRun, ScrapedDocument
+
+from .config import ScraperConfig, default_config
+from .crawler import PlaywrightCrawler
+from .change_detector import process_scraped_documents
+from .processor import process_changed_documents
 
 
 def run_scrape_and_ingest_pipeline(
@@ -18,13 +22,6 @@ def run_scrape_and_ingest_pipeline(
 ) -> Dict[str, Any]:
     """
     Complete end-to-end scraper and RAG update pipeline.
-    
-    1. Crawls public VTU website using Playwright.
-    2. Stores raw scraped pages and PDFs into SQL database.
-    3. Runs SHA-256 change detection against SQL source of truth.
-    4. Identifies NEW and UPDATED content.
-    5. Cleans content, extracts metadata, chunks, and updates vector store.
-    6. Logs statistics and updates ScrapeRun SQL record.
     """
     cfg = config or default_config
     db = SessionLocal()

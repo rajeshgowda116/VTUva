@@ -1,12 +1,11 @@
 import asyncio
-import time
 from typing import List, Dict, Any, Set, Optional
 from playwright.async_api import async_playwright, Browser, Page
 
-from backend.scraper.config import ScraperConfig, default_config
-from backend.scraper.url_discovery import normalize_url, is_allowed_url, extract_links
-from backend.scraper.page_parser import parse_html_page
-from backend.scraper.pdf_handler import download_and_parse_pdf
+from .config import ScraperConfig, default_config
+from .url_discovery import normalize_url, is_allowed_url, extract_links
+from .page_parser import parse_html_page
+from .pdf_handler import download_and_parse_pdf
 
 
 class PlaywrightCrawler:
@@ -53,7 +52,6 @@ class PlaywrightCrawler:
 
             try:
                 while queue and len(self.scraped_documents) < self.config.max_pages:
-                    # Take batch up to concurrency_limit
                     batch = []
                     while queue and len(batch) < self.config.concurrency_limit:
                         item = queue.pop(0)
@@ -104,10 +102,8 @@ class PlaywrightCrawler:
             print(f"[SCRAPER] Crawling HTML page [Depth {depth}]: {url}")
             page: Page = await context.new_page()
             try:
-                # Set default timeouts
                 page.set_default_timeout(self.config.request_timeout_ms)
 
-                # Polite delay before request
                 if self.config.request_delay_seconds > 0:
                     await asyncio.sleep(self.config.request_delay_seconds)
 
@@ -122,17 +118,27 @@ class PlaywrightCrawler:
                     await page.close()
                     return
 
-                content_type = headers.get("content-type", "text/html")
-                raw_html = await page.content()
+                content_type = headers.get("content-type", "text/html").split(";")[0].strip().lower()
                 
-                # Parse page HTML structure & metadata
+                if content_type == "application/pdf":
+                    print(f"[SCRAPER] Response for {url} is application/pdf, delegating to PDF handler.")
+                    await page.close()
+                    pdf_res = await download_and_parse_pdf(url, parent_url=parent_url, config=self.config)
+                    if not pdf_res.get("error"):
+                        pdf_res["depth"] = depth
+                        self.scraped_documents.append(pdf_res)
+                    else:
+                        self.failed_urls.append({"url": url, "error": pdf_res["error"], "depth": depth})
+                    return
+
+                raw_html = await page.content()
                 parsed = parse_html_page(raw_html, page_url=url)
                 
                 doc_record = {
                     "url": url,
                     "canonical_url": parsed["canonical_url"],
                     "title": parsed["title"] or url,
-                    "content": raw_html,  # Keep original raw HTML separately as required
+                    "content": raw_html,
                     "raw_text": parsed["raw_text"],
                     "content_type": "html",
                     "mime_type": content_type.split(";")[0],
@@ -145,10 +151,8 @@ class PlaywrightCrawler:
                 }
                 self.scraped_documents.append(doc_record)
 
-                # Discover new links if within depth limit
                 if depth < self.config.max_depth:
                     new_links = extract_links(raw_html, base_url=url, config=self.config)
-                    # Also include PDF links discovered by parser
                     new_links.update(parsed["pdf_links"])
 
                     for link in new_links:

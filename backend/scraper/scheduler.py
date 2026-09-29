@@ -3,8 +3,8 @@ import threading
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
-from backend.scraper.config import default_config
-from backend.scraper.pipeline import run_scrape_and_ingest_pipeline
+from .config import default_config
+from .pipeline import run_scrape_and_ingest_pipeline
 
 _scheduler_task: Optional[asyncio.Task] = None
 _is_running_pipeline: bool = False

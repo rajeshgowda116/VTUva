@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 from bs4 import BeautifulSoup
-from backend.scraper.url_discovery import extract_links, normalize_url
+from .url_discovery import extract_links, normalize_url
 
 
 def parse_html_page(html_content: str, page_url: str) -> Dict[str, Any]:
@@ -62,8 +62,7 @@ def parse_html_page(html_content: str, page_url: str) -> Dict[str, Any]:
                 pdf_links.add(norm_pdf)
     result["pdf_links"] = list(pdf_links)
 
-    # 6. Extract Raw Body Text (uncleaned raw text for initial storage)
-    # Remove script and style elements first
+    # 6. Extract Raw Body Text
     body = soup.find("body") or soup
     body_clone = BeautifulSoup(str(body), "html.parser")
     for script_or_style in body_clone(["script", "style", "noscript"]):

@@ -28,7 +28,7 @@ class ScraperConfig(BaseModel):
     )
     allowed_file_extensions: Set[str] = Field(
         default_factory=lambda: {
-            ".html", ".htm", ".pdf", ".doc", ".docx", ".xls", ".xlsx"
+            ".html", ".htm", ".php", ".aspx", ".jsp", ".asp", ".pdf", ".doc", ".docx", ".xls", ".xlsx"
         }
     )
     blocked_file_extensions: Set[str] = Field(

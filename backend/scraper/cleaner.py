@@ -28,12 +28,11 @@ def clean_html_content(raw_html: str) -> str:
         for element in soup.select(selector):
             element.decompose()
 
-    # Target main content container if present
     main_content = (
         soup.find("main") or
         soup.find("article") or
-        soup.find(class_=re.compile(r"content|entry|post|page-body|main", re.I)) or
-        soup.find(id=re.compile(r"content|main", re.I)) or
+        soup.find(class_=re.compile(r"\b(entry-content|main-content|site-content|page-content|content-area)\b", re.I)) or
+        soup.find(id=re.compile(r"\b(primary|main-content|content|main)\b", re.I)) or
         soup.find("body") or
         soup
     )
