@@ -59,8 +59,17 @@ def process_and_summarize_pyqs():
     """
     processor = PYQProcessor()
     
-    # Collect all PDFs from prev_qustions directory (and data/prev_qustions if present)
-    pyq_files = list(PREV_QUESTIONS_PATH.rglob("*.pdf")) if PREV_QUESTIONS_PATH.exists() else []
+    # Collect all PDFs from prev_qustions / prev_qustion / prev_questions directories
+    pyq_dirs = [
+        ROOT_DIR / "prev_qustions",
+        ROOT_DIR / "prev_qustion",
+        ROOT_DIR / "prev_questions"
+    ]
+    pyq_files = []
+    for d in pyq_dirs:
+        if d.exists():
+            pyq_files.extend(list(d.rglob("*.pdf")))
+
     if DATA_PATH.exists():
         pyq_files.extend(list(DATA_PATH.rglob("*prev_qustion*.pdf")))
         pyq_files.extend(list(DATA_PATH.rglob("*pyq*.pdf")))

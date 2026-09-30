@@ -201,3 +201,35 @@ class PYQProcessor:
 
         logger.info(f"Processed {len(questions)} questions for {metadata['subject_code']}. Saved to {out_path}")
         return result_payload
+
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+
+    processor = PYQProcessor()
+    root_dir = Path(__file__).resolve().parent.parent
+
+    if len(sys.argv) > 1:
+        pdf_files = [Path(sys.argv[1])]
+    else:
+        pdf_files = []
+        for folder_name in ["prev_qustions", "prev_qustion", "prev_questions"]:
+            target_dir = root_dir / folder_name
+            if target_dir.exists():
+                pdf_files.extend(list(target_dir.rglob("*.pdf")))
+
+    if not pdf_files:
+        print("No PDF files found to process.")
+        sys.exit(0)
+
+    print(f"Found {len(pdf_files)} PYQ PDF(s) to convert:")
+    for pdf_path in pdf_files:
+        print(f"\nProcessing: {pdf_path.name}")
+        res = processor.process_paper(str(pdf_path), force_reprocess=True)
+        print(f"[SUCCESS] Converted {res['question_count']} questions -> Saved to data/pyq_processed/")
+
+

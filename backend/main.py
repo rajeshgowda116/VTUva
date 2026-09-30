@@ -70,7 +70,7 @@ def warmup_models():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application startup handler - launches background model pre-warming and 12-hour scraper scheduler."""
+    """Application startup handler - launches background model pre-warming and 24-hour scraper scheduler."""
     asyncio.create_task(asyncio.to_thread(warmup_models))
     try:
         start_scraper_scheduler()

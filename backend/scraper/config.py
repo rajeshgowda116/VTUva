@@ -49,7 +49,7 @@ class ScraperConfig(BaseModel):
         "Chrome/120.0.0.0 Safari/537.36 (VTUva Scraper Bot/1.0)"
     )
     pdf_save_dir: Path = SCRAPED_PDFS_DIR
-    schedule_interval_hours: int = 12
+    schedule_interval_hours: int = int(os.getenv("SCRAPER_SCHEDULE_HOURS", "24"))
 
 
 default_config = ScraperConfig()
