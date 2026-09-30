@@ -92,6 +92,7 @@ def get_llm(model_override: str = None):
 def build_prompt(question: str, context: str) -> str:
     """
     Strict RAG prompt builder:
+    - Detects 5-Mark or 10-Mark exam request intents and builds structured VTU exam answer formats.
     - Instructs LLM to answer ONLY from retrieved CONTEXT chunks.
     - If answer is not present in CONTEXT, LLM MUST reply clearly that it is not present in ingested VTU syllabus documents.
     """
@@ -102,6 +103,9 @@ def build_prompt(question: str, context: str) -> str:
         re.search(r"\b(question|questions|pyq|pyqs|important\s+questions|repeated\s+questions)\b", q_lower) and
         not re.search(r"\b(explain|describe|solve|answer|solution|write\s+an?\s+answer)\b", q_lower)
     )
+
+    is_5_marks = bool(re.search(r"\b(5\s*marks?|5\s*mark|five\s*marks?)\b", q_lower))
+    is_10_marks = bool(re.search(r"\b(10\s*marks?|10\s*mark|ten\s*marks?|8\s*marks?|8\s*mark|eight\s*marks?)\b", q_lower))
 
     if is_list_intent:
         return f"""You are VTUva, a VTU engineering study assistant.
@@ -121,14 +125,68 @@ STUDENT QUESTION:
 QUESTION LIST:
 """
 
-    return f"""You are VTUva, a VTU engineering study assistant.
+    if is_5_marks:
+        return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+
+The student specifically requested a **5-MARK VTU EXAM ANSWER** for: "{question}".
+
+STRICT CONSTRAINTS & RULES:
+1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
+2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
+3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
+   "This topic is not present in the ingested VTU syllabus/notes documents."
+4. Structure the output into a clean, high-scoring 5-MARK VTU EXAM FORMAT:
+   - 🎯 **Header**: Topic Title & Marks Weightage (5 Marks)
+   - 📌 **1. Definition / Overview**: 2-3 concise sentences explaining the concept.
+   - 🔑 **2. Key Components / Core Principles**: 4-5 structured bullet points with bold keywords.
+   - 📊 **3. Block Diagram / Flowchart (ASCII)**: A clean ASCII block diagram or structural flowchart if applicable.
+   - ⚡ **4. Advantages & Disadvantages / Key Characteristics**: 3-4 distinct bullet points.
+
+CONTEXT:
+{context}
+
+STUDENT QUESTION:
+{question}
+
+5-MARK VTU EXAM ANSWER:
+"""
+
+    if is_10_marks:
+        return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+
+The student specifically requested a **10-MARK VTU EXAM ANSWER** for: "{question}".
+
+STRICT CONSTRAINTS & RULES:
+1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
+2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
+3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
+   "This topic is not present in the ingested VTU syllabus/notes documents."
+4. Structure the output into a comprehensive, full-credit 10-MARK VTU EXAM FORMAT:
+   - 🎯 **Header**: Topic Title & Marks Weightage (10 Marks)
+   - 📖 **1. Comprehensive Definition & Introduction**: Clear, exam-ready overview paragraph.
+   - 📐 **2. Labeled Architecture / Flowchart Diagram**: Provide a detailed ASCII diagram or process chart.
+   - ⚙️ **3. Core Phases / Components / Detailed Explanation**: 6-8 comprehensive sections with bold technical VTU keywords.
+   - 💡 **4. Practical Example / Use Case**: An illustrative scenario or implementation example.
+   - ⚖️ **5. Comparison / Pros & Cons Table**: Markdown table or categorized bullet points.
+   - 📝 **6. Conclusion**: Summary wrap-up.
+
+CONTEXT:
+{context}
+
+STUDENT QUESTION:
+{question}
+
+10-MARK VTU EXAM ANSWER:
+"""
+
+    return f"""You are VTUva, an expert VTU engineering study assistant.
 
 STRICT CONSTRAINTS & RULES:
 1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
 2. Do NOT use outside knowledge or invent answers if the specific topic/solution is not present in the CONTEXT.
 3. If the CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
    "This topic is not present in the ingested VTU syllabus/notes documents."
-4. Use clean, exam-oriented markdown formatting.
+4. Format the answer in a clean, exam-oriented structure with clear headings, bold VTU keywords, and structured bullet points.
 
 CONTEXT:
 {context}
