@@ -102,6 +102,17 @@ def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
 
 def enhance_pyq_search_query(question: str) -> str:
     q_clean = question.strip()
+
+    # Typo normalization
+    typos = {
+        r"\bsenser\b": "sensor",
+        r"\bsensers\b": "sensors",
+        r"\bprocesser\b": "processor",
+        r"\bprocessers\b": "processors",
+    }
+    for pattern, replacement in typos.items():
+        q_clean = re.sub(pattern, replacement, q_clean, flags=re.IGNORECASE)
+
     is_pyq_intent = re.search(r"(repeat|repet|frequent|freq|most\s+asked|pyq|pyqs|previous\s+year)", q_clean, re.IGNORECASE)
     has_course_code = re.search(r"([A-Z]{2,5}\d{2,4}|21[A-Z]{2,3}\d{2}|18[A-Z]{2,3}\d{2})", q_clean, re.IGNORECASE)
 

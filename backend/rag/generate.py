@@ -104,8 +104,9 @@ def build_prompt(question: str, context: str) -> str:
         not re.search(r"\b(explain|describe|solve|answer|solution|write\s+an?\s+answer)\b", q_lower)
     )
 
-    is_5_marks = bool(re.search(r"\b(5\s*marks?|5\s*mark|five\s*marks?)\b", q_lower))
-    is_10_marks = bool(re.search(r"\b(10\s*marks?|10\s*mark|ten\s*marks?|8\s*marks?|8\s*mark|eight\s*marks?)\b", q_lower))
+    is_5_marks = bool(re.search(r"\b(4\s*marks?|4\s*mark|5\s*marks?|5\s*mark|four\s*marks?|five\s*marks?)\b", q_lower))
+    is_7_marks = bool(re.search(r"\b(6\s*marks?|6\s*mark|7\s*marks?|7\s*mark|six\s*marks?|seven\s*marks?)\b", q_lower))
+    is_10_marks = bool(re.search(r"\b(8\s*marks?|8\s*mark|10\s*marks?|10\s*mark|eight\s*marks?|ten\s*marks?)\b", q_lower))
 
     if is_list_intent:
         return f"""You are VTUva, a VTU engineering study assistant.
@@ -149,6 +150,33 @@ STUDENT QUESTION:
 {question}
 
 5-MARK VTU EXAM ANSWER:
+"""
+
+    if is_7_marks:
+        return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+
+The student specifically requested a **7-MARK VTU EXAM ANSWER** for: "{question}".
+
+STRICT CONSTRAINTS & RULES:
+1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
+2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
+3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
+   "This topic is not present in the ingested VTU syllabus/notes documents."
+4. Structure the output into a high-scoring, well-balanced 7-MARK VTU EXAM FORMAT:
+   - 🎯 **Header**: Topic Title & Marks Weightage (7 Marks)
+   - 📌 **1. Definition & Core Concept**: Clear 3-4 sentence introductory explanation.
+   - 📐 **2. Structural Block Diagram / Flowchart (ASCII)**: A clean ASCII diagram or architectural chart.
+   - 🔑 **3. Key Phases / Core Principles / Detailed Working**: 5-6 numbered points with bold technical VTU keywords.
+   - 💡 **4. Real-World Application / Key Characteristics**: 3-4 distinct points explaining usage or advantages.
+   - ⚡ **5. Key Strengths & Limitations**: Concise bullet points highlighting pros and cons.
+
+CONTEXT:
+{context}
+
+STUDENT QUESTION:
+{question}
+
+7-MARK VTU EXAM ANSWER:
 """
 
     if is_10_marks:
