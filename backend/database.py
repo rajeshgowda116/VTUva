@@ -42,6 +42,28 @@ def init_engine():
         return create_engine(sqlite_url, connect_args={"check_same_thread": False}, echo=False)
 
 engine = init_engine()
+
+def check_and_migrate_db(target_engine):
+    try:
+        with target_engine.connect() as conn:
+            if target_engine.name == "sqlite":
+                result = conn.execute(text("PRAGMA table_info(chat_history)"))
+                columns = [row[1] for row in result.fetchall()]
+                if columns and "subject" not in columns:
+                    print("[Database Migration] Adding `subject` column to SQLite `chat_history` table...")
+                    conn.execute(text("ALTER TABLE chat_history ADD COLUMN subject VARCHAR(100) DEFAULT 'General'"))
+                    conn.commit()
+            elif target_engine.name == "mysql":
+                result = conn.execute(text("SHOW COLUMNS FROM chat_history LIKE 'subject'"))
+                if not result.fetchone():
+                    print("[Database Migration] Adding `subject` column to MySQL `chat_history` table...")
+                    conn.execute(text("ALTER TABLE chat_history ADD COLUMN subject VARCHAR(100) DEFAULT 'General'"))
+                    conn.commit()
+    except Exception as e:
+        print(f"[Database Migration Notice] {e}")
+
+check_and_migrate_db(engine)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -51,3 +73,4 @@ def get_db():
         yield db
     finally:
         db.close()
+

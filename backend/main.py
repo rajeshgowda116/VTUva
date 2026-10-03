@@ -24,8 +24,8 @@ from sqlalchemy.orm import Session
 
 try:
     from backend.database import engine, Base, get_db, SessionLocal
-    from backend.models import ChatHistory
-    from backend.schemas import ChatRequest, ChatResponse
+    from backend.models import ChatHistory, UserProfile
+    from backend.schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse
     from backend.rag.pipeline import ask_question, prepare_rag_context
     from backend.rag.generate import generate_answer_stream, get_llm
     from backend.rag.retriever import get_retriever, get_vector_store
@@ -34,14 +34,15 @@ try:
     from backend.scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
 except ImportError:
     from database import engine, Base, get_db, SessionLocal
-    from models import ChatHistory
-    from schemas import ChatRequest, ChatResponse
+    from models import ChatHistory, UserProfile
+    from schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse
     from rag.pipeline import ask_question, prepare_rag_context
     from rag.generate import generate_answer_stream, get_llm
     from rag.retriever import get_retriever, get_vector_store
     from rag.embeddings import get_embeddings
     from scraper.api import router as scraper_router
     from scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
+
 
 # Create database tables if they do not exist
 try:
@@ -116,6 +117,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
         user_id = 1
 
     question_text = data.question.strip()
+    subject_tag = data.subject or "General"
 
     def event_generator():
         t_start = time.perf_counter()
@@ -161,6 +163,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
             try:
                 chat_record = ChatHistory(
                     user_id=user_id,
+                    subject=subject_tag,
                     question=question_text,
                     answer=casual_msg,
                     created_at=datetime.utcnow()
@@ -184,6 +187,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
             try:
                 chat_record = ChatHistory(
                     user_id=user_id,
+                    subject=subject_tag,
                     question=question_text,
                     answer=no_info_msg,
                     created_at=datetime.utcnow()
@@ -219,6 +223,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
         try:
             chat_record = ChatHistory(
                 user_id=user_id,
+                subject=subject_tag,
                 question=question_text,
                 answer=full_answer,
                 created_at=datetime.utcnow()
@@ -231,6 +236,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
             db.rollback()
             print(f"[DB Error] Failed to save chat record: {db_err}")
             record_id = 0
+
 
         t_db = time.perf_counter() - t_db_start
         t_total = time.perf_counter() - t_start
@@ -280,8 +286,10 @@ def post_chat(data: ChatRequest, request: Request, db: Session = Depends(get_db)
         answer_text = result.get("answer", "") if isinstance(result, dict) else str(result)
         sources = result.get("sources", []) if isinstance(result, dict) else []
 
+        subject_tag = data.subject or "General"
         chat_record = ChatHistory(
             user_id=user_id,
+            subject=subject_tag,
             question=data.question.strip(),
             answer=answer_text,
             created_at=datetime.utcnow()
@@ -292,6 +300,7 @@ def post_chat(data: ChatRequest, request: Request, db: Session = Depends(get_db)
 
         return ChatResponse(
             id=chat_record.id,
+            subject=chat_record.subject,
             question=chat_record.question,
             answer=chat_record.answer,
             created_at=chat_record.created_at,
@@ -304,7 +313,7 @@ def post_chat(data: ChatRequest, request: Request, db: Session = Depends(get_db)
 
 
 @app.get("/api/chat/history", response_model=List[ChatResponse])
-def get_chat_history(request: Request, db: Session = Depends(get_db)):
+def get_chat_history(request: Request, subject: Optional[str] = None, db: Session = Depends(get_db)):
     user_id_header = request.headers.get("X-User-ID", "1")
     try:
         user_id = int(user_id_header)
@@ -312,16 +321,112 @@ def get_chat_history(request: Request, db: Session = Depends(get_db)):
         user_id = 1
 
     try:
-        history = (
-            db.query(ChatHistory)
-            .filter(ChatHistory.user_id == user_id)
-            .order_by(ChatHistory.id.asc())
-            .all()
-        )
+        query = db.query(ChatHistory).filter(ChatHistory.user_id == user_id)
+        if subject and subject.strip() and subject.strip() != "All":
+            query = query.filter(ChatHistory.subject == subject.strip())
+        history = query.order_by(ChatHistory.id.asc()).all()
         return history
     except Exception as e:
         print(f"Error in /api/chat/history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/user/profile", response_model=UserProfileResponse)
+def save_user_profile(data: UserProfileRequest, request: Request, db: Session = Depends(get_db)):
+    user_id_header = request.headers.get("X-User-ID", "1")
+    try:
+        user_id = int(user_id_header)
+    except ValueError:
+        user_id = 1
+
+    try:
+        profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+        subjects_json_str = json.dumps(data.subjects)
+        if not profile:
+            profile = UserProfile(
+                user_id=user_id,
+                name=data.name or "Rajesh Gouda",
+                usn=data.usn or "4DM24AI038",
+                semester=data.semester,
+                branch=data.branch,
+                branch_full=data.branch_full,
+                subjects_json=subjects_json_str
+            )
+            db.add(profile)
+        else:
+            profile.name = data.name or profile.name
+            profile.usn = data.usn or profile.usn
+            profile.semester = data.semester
+            profile.branch = data.branch
+            profile.branch_full = data.branch_full
+            profile.subjects_json = subjects_json_str
+        
+        db.commit()
+        db.refresh(profile)
+
+        return UserProfileResponse(
+            id=profile.id,
+            user_id=profile.user_id,
+            name=profile.name,
+            usn=profile.usn,
+            semester=profile.semester,
+            branch=profile.branch,
+            branch_full=profile.branch_full,
+            subjects=json.loads(profile.subjects_json),
+            created_at=profile.created_at,
+            updated_at=profile.updated_at
+        )
+    except Exception as e:
+        db.rollback()
+        print(f"Error in /api/user/profile (POST): {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/user/profile", response_model=UserProfileResponse)
+def get_user_profile(request: Request, db: Session = Depends(get_db)):
+    user_id_header = request.headers.get("X-User-ID", "1")
+    try:
+        user_id = int(user_id_header)
+    except ValueError:
+        user_id = 1
+
+    try:
+        profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+        if not profile:
+            default_subjects = [
+                {"code": "BCS501", "name": "Software Engineering and Project Management"},
+                {"code": "BCS502", "name": "Database Management Systems"},
+                {"code": "BCS504", "name": "Computer Networks"}
+            ]
+            profile = UserProfile(
+                user_id=user_id,
+                name="Rajesh Gouda",
+                usn="4DM24AI038",
+                semester="5th Semester",
+                branch="AIML",
+                branch_full="Artificial Intelligence & Machine Learning (AIML)",
+                subjects_json=json.dumps(default_subjects)
+            )
+            db.add(profile)
+            db.commit()
+            db.refresh(profile)
+
+        return UserProfileResponse(
+            id=profile.id,
+            user_id=profile.user_id,
+            name=profile.name,
+            usn=profile.usn,
+            semester=profile.semester,
+            branch=profile.branch,
+            branch_full=profile.branch_full,
+            subjects=json.loads(profile.subjects_json),
+            created_at=profile.created_at,
+            updated_at=profile.updated_at
+        )
+    except Exception as e:
+        print(f"Error in /api/user/profile (GET): {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.post("/ask")
@@ -346,19 +451,27 @@ data_dir = ROOT_DIR / "data"
 if data_dir.exists():
     app.mount("/data", StaticFiles(directory=str(data_dir)), name="data")
 
-# Serve frontend static assets
+# Serve frontend templates and static assets
 frontend_dir = ROOT_DIR / "frontend"
 if frontend_dir.exists():
+    from fastapi.templating import Jinja2Templates
+    templates = Jinja2Templates(directory=str(frontend_dir))
+
     @app.get("/")
-    async def serve_index():
-        return FileResponse(frontend_dir / "index.html")
+    async def serve_index(request: Request):
+        return templates.TemplateResponse(request, "index.html")
 
     @app.get("/{file_name}")
-    async def serve_frontend_files(file_name: str):
+    async def serve_frontend_files(file_name: str, request: Request):
+        if file_name.endswith(".html"):
+            template_path = frontend_dir / file_name
+            if template_path.exists() and template_path.is_file():
+                return templates.TemplateResponse(request, file_name)
         file_path = frontend_dir / file_name
         if file_path.exists() and file_path.is_file():
             return FileResponse(file_path)
-        return FileResponse(frontend_dir / "index.html")
+        return templates.TemplateResponse(request, "index.html")
+
 
 if __name__ == "__main__":
     import uvicorn

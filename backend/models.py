@@ -13,9 +13,11 @@ class ChatHistory(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, nullable=False, default=1, index=True)
+    subject = Column(String(100), nullable=True, default="General", index=True)
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 
 
 class ScrapedDocument(Base):
@@ -79,6 +81,22 @@ class ScrapeRun(Base):
     unchanged_documents = Column(Integer, default=0)
     removed_documents = Column(Integer, default=0)
     failed_documents = Column(Integer, default=0)
-    rag_documents_processed = Column(Integer, default=0)
     error_message = Column(Text, nullable=True)
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, nullable=False, unique=True, index=True, default=1)
+    name = Column(String(255), nullable=True, default="Rajesh Gouda")
+    usn = Column(String(50), nullable=True, default="4DM24AI038")
+    semester = Column(String(100), nullable=False, default="5th Semester")
+    branch = Column(String(100), nullable=False, default="AIML")
+    branch_full = Column(String(255), nullable=True, default="Artificial Intelligence & Machine Learning (AIML)")
+    subjects_json = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
 
