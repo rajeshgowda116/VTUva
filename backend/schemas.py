@@ -46,3 +46,19 @@ class UserProfileResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+class VTUUpdateResponse(BaseModel):
+    id: int
+    category: str
+    title: str
+    summary: str
+    time_posted: str
+    badge_color: str
+    icon_type: str
+    link: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+

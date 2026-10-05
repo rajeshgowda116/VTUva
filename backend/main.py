@@ -19,13 +19,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 
 try:
     from backend.database import engine, Base, get_db, SessionLocal
-    from backend.models import ChatHistory, UserProfile
-    from backend.schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse
+    from backend.models import ChatHistory, UserProfile, VTUUpdate
+    from backend.schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse, VTUUpdateResponse
     from backend.rag.pipeline import ask_question, prepare_rag_context
     from backend.rag.generate import generate_answer_stream, get_llm
     from backend.rag.retriever import get_retriever, get_vector_store
@@ -34,14 +34,15 @@ try:
     from backend.scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
 except ImportError:
     from database import engine, Base, get_db, SessionLocal
-    from models import ChatHistory, UserProfile
-    from schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse
+    from models import ChatHistory, UserProfile, VTUUpdate
+    from schemas import ChatRequest, ChatResponse, UserProfileRequest, UserProfileResponse, VTUUpdateResponse
     from rag.pipeline import ask_question, prepare_rag_context
     from rag.generate import generate_answer_stream, get_llm
     from rag.retriever import get_retriever, get_vector_store
     from rag.embeddings import get_embeddings
     from scraper.api import router as scraper_router
     from scraper.scheduler import start_scraper_scheduler, stop_scraper_scheduler
+
 
 
 # Create database tables if they do not exist
@@ -427,6 +428,66 @@ def get_user_profile(request: Request, db: Session = Depends(get_db)):
         print(f"Error in /api/user/profile (GET): {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/api/updates", response_model=List[VTUUpdateResponse])
+def get_vtu_updates(category: Optional[str] = None, db: Session = Depends(get_db)):
+    try:
+        count = db.query(VTUUpdate).count()
+        if count == 0:
+            default_updates = [
+                VTUUpdate(
+                    category="Result",
+                    title="VTU 3rd Semester Results Released",
+                    summary="VTU has announced the 3rd semester results for all branches (2024-25 batch).",
+                    time_posted="2 hours ago",
+                    badge_color="green",
+                    icon_type="document"
+                ),
+                VTUUpdate(
+                    category="Exam",
+                    title="5th Semester Exam Time Table Out",
+                    summary="VTU has released the time table for 5th semester end semester examinations (Dec 2026).",
+                    time_posted="1 day ago",
+                    badge_color="red",
+                    icon_type="calendar"
+                ),
+                VTUUpdate(
+                    category="Notification",
+                    title="Updated Syllabus for 2022 Scheme",
+                    summary="Revised syllabus for select subjects under VTU 2022 scheme has been published.",
+                    time_posted="2 days ago",
+                    badge_color="blue",
+                    icon_type="file"
+                ),
+                VTUUpdate(
+                    category="Circular",
+                    title="Internal Assessment Guidelines",
+                    summary="VTU has issued new guidelines for internal assessment marks and submission.",
+                    time_posted="3 days ago",
+                    badge_color="amber",
+                    icon_type="megaphone"
+                ),
+                VTUUpdate(
+                    category="General",
+                    title="Convocation 2026 Notification",
+                    summary="VTU Convocation 2026 details and registration process announced.",
+                    time_posted="5 days ago",
+                    badge_color="purple",
+                    icon_type="cap"
+                )
+            ]
+            for u in default_updates:
+                db.add(u)
+            db.commit()
+
+        query = db.query(VTUUpdate)
+        if category and category.strip() and category.strip().lower() != "all":
+            query = query.filter(VTUUpdate.category.ilike(category.strip()))
+
+        return query.order_by(VTUUpdate.id.asc()).all()
+    except Exception as e:
+        print(f"Error in /api/updates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/ask")

@@ -100,3 +100,19 @@ class UserProfile(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class VTUUpdate(Base):
+    __tablename__ = "vtu_updates"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    category = Column(String(50), nullable=False, index=True)
+    title = Column(String(500), nullable=False)
+    summary = Column(Text, nullable=False)
+    time_posted = Column(String(100), nullable=False)
+    badge_color = Column(String(50), default="blue")
+    icon_type = Column(String(50), default="file")
+    link = Column(String(768), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+
