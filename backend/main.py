@@ -208,7 +208,7 @@ def post_chat_stream(data: ChatRequest, request: Request, db: Session = Depends(
         t_first_token = None
         t_llm_start = time.perf_counter()
 
-        for chunk in generate_answer_stream(standalone_question, context):
+        for chunk in generate_answer_stream(standalone_question, context, subject=subject_tag):
             if t_first_token is None:
                 t_first_token = time.perf_counter() - t_start
 
@@ -283,11 +283,10 @@ def post_chat(data: ChatRequest, request: Request, db: Session = Depends(get_db)
             for record in recent_records
         ]
 
-        result = ask_question(data.question.strip(), history=history)
+        subject_tag = data.subject or "General"
+        result = ask_question(data.question.strip(), history=history, subject=subject_tag)
         answer_text = result.get("answer", "") if isinstance(result, dict) else str(result)
         sources = result.get("sources", []) if isinstance(result, dict) else []
-
-        subject_tag = data.subject or "General"
         chat_record = ChatHistory(
             user_id=user_id,
             subject=subject_tag,
@@ -396,8 +395,8 @@ def get_user_profile(request: Request, db: Session = Depends(get_db)):
         if not profile:
             default_subjects = [
                 {"code": "BCS501", "name": "Software Engineering and Project Management"},
-                {"code": "BCS502", "name": "Database Management Systems"},
-                {"code": "BCS504", "name": "Computer Networks"}
+                {"code": "BCS502", "name": "Computer Networks"},
+                {"code": "BCS503", "name": "Theory of Computation"}
             ]
             profile = UserProfile(
                 user_id=user_id,
@@ -432,53 +431,86 @@ def get_user_profile(request: Request, db: Session = Depends(get_db)):
 @app.get("/api/updates", response_model=List[VTUUpdateResponse])
 def get_vtu_updates(category: Optional[str] = None, db: Session = Depends(get_db)):
     try:
+        category_links = {
+            "Result": "https://results.vtu.ac.in/",
+            "Exam": "https://vtu.ac.in/category/time-table",
+            "Time Tables": "https://vtu.ac.in/category/time-table",
+            "Notification": "https://vtu.ac.in/en/category/administration/notifications/",
+            "Circular": "https://vtu.ac.in/en/category/administration/circulars/",
+            "Syllabus": "https://vtu.ac.in/model-question-paper-b-e-b-tech-b-arch",
+            "General": "https://vtu.ac.in/"
+        }
+
         count = db.query(VTUUpdate).count()
         if count == 0:
             default_updates = [
                 VTUUpdate(
                     category="Result",
-                    title="VTU 3rd Semester Results Released",
-                    summary="VTU has announced the 3rd semester results for all branches (2024-25 batch).",
+                    title="VTU 3rd Semester & Revaluation Results",
+                    summary="Check official VTU semester examination results, revaluation results, and grade cards.",
                     time_posted="2 hours ago",
                     badge_color="green",
-                    icon_type="document"
+                    icon_type="document",
+                    link="https://results.vtu.ac.in/"
                 ),
                 VTUUpdate(
                     category="Exam",
-                    title="5th Semester Exam Time Table Out",
-                    summary="VTU has released the time table for 5th semester end semester examinations (Dec 2026).",
+                    title="5th Semester Exam Time Table & Schedule",
+                    summary="VTU has released the examination time table for B.E/B.Tech end semester examinations.",
                     time_posted="1 day ago",
                     badge_color="red",
-                    icon_type="calendar"
+                    icon_type="calendar",
+                    link="https://vtu.ac.in/category/time-table"
                 ),
                 VTUUpdate(
                     category="Notification",
                     title="Updated Syllabus for 2022 Scheme",
-                    summary="Revised syllabus for select subjects under VTU 2022 scheme has been published.",
+                    summary="Revised syllabus and model question papers for select subjects under VTU 2022 scheme.",
                     time_posted="2 days ago",
                     badge_color="blue",
-                    icon_type="file"
+                    icon_type="file",
+                    link="https://vtu.ac.in/en/category/administration/notifications/"
                 ),
                 VTUUpdate(
                     category="Circular",
-                    title="Internal Assessment Guidelines",
-                    summary="VTU has issued new guidelines for internal assessment marks and submission.",
+                    title="Internal Assessment & Exam Guidelines",
+                    summary="VTU Registrar circular regarding internal assessment marks submission and academic guidelines.",
                     time_posted="3 days ago",
                     badge_color="amber",
-                    icon_type="megaphone"
+                    icon_type="megaphone",
+                    link="https://vtu.ac.in/en/category/administration/circulars/"
+                ),
+                VTUUpdate(
+                    category="Syllabus",
+                    title="Model Question Papers B.E. / B.Tech",
+                    summary="Download official VTU model question papers and scheme structure for undergraduate programs.",
+                    time_posted="4 days ago",
+                    badge_color="indigo",
+                    icon_type="document",
+                    link="https://vtu.ac.in/model-question-paper-b-e-b-tech-b-arch"
                 ),
                 VTUUpdate(
                     category="General",
-                    title="Convocation 2026 Notification",
-                    summary="VTU Convocation 2026 details and registration process announced.",
+                    title="VTU Convocation & Campus Announcement",
+                    summary="VTU Convocation details, Centralised Placement Cell notifications, and university announcements.",
                     time_posted="5 days ago",
                     badge_color="purple",
-                    icon_type="cap"
+                    icon_type="cap",
+                    link="https://vtu.ac.in/"
                 )
             ]
             for u in default_updates:
                 db.add(u)
             db.commit()
+        else:
+            existing_updates = db.query(VTUUpdate).all()
+            updated_any = False
+            for u in existing_updates:
+                if not u.link:
+                    u.link = category_links.get(u.category, "https://vtu.ac.in/")
+                    updated_any = True
+            if updated_any:
+                db.commit()
 
         query = db.query(VTUUpdate)
         if category and category.strip() and category.strip().lower() != "all":

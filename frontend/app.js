@@ -19,8 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalSearchField = document.getElementById('modal-search-field');
   const toast = document.getElementById('toast');
   const recentChatsList = document.getElementById('recent-chats-list');
-  const dashboardRecentQuestions = document.getElementById('dashboard-recent-questions');
-  const refreshHistoryLink = document.getElementById('view-all-history-link');
 
   // STATE
   let currentView = 'home'; // 'home' | 'chat'
@@ -171,12 +169,14 @@ document.addEventListener('DOMContentLoaded', () => {
     switchView('chat');
 
     const historyContext = getCurrentChatContext();
+    const activeSubject = document.getElementById('subject-select')?.value || 'General';
 
     // Append User Bubble
     const userWrapper = document.createElement('div');
     userWrapper.className = 'message-wrapper user';
     userWrapper.innerHTML = `
       <div class="user-bubble">
+        <div style="font-size: 11px; opacity: 0.75; margin-bottom: 2px;">📌 ${escapeHtml(activeSubject)}</div>
         <span>${escapeHtml(text)}</span>
       </div>
     `;
@@ -187,11 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
     chatInput.style.height = 'auto';
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
-    // Fetch Answer from FastAPI RAG Backend and save to MySQL
-    fetchRAGAnswer(text, historyContext);
+    // Fetch Answer from FastAPI RAG Backend and save to SQL Database
+    fetchRAGAnswer(text, historyContext, activeSubject);
   }
 
-  async function fetchRAGAnswer(promptText, historyContext = []) {
+  async function fetchRAGAnswer(promptText, historyContext = [], subject = 'General') {
     isStreaming = true;
 
     // Create Assistant Bubble with Loading Spinner
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <svg class="spin-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 1s linear infinite;">
               <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             </svg>
-            <span>VTUva is searching documents & thinking...</span>
+            <span>VTUva is searching documents & thinking for [${escapeHtml(subject)}]...</span>
           </div>
         </div>
       </div>
@@ -226,8 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'X-User-ID': currentUserId,
         },
-        body: JSON.stringify({ question: promptText, history: historyContext }),
+        body: JSON.stringify({ question: promptText, subject: subject, history: historyContext }),
       });
+
 
 
       if (!response.ok) {
@@ -329,17 +330,46 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
 
+      // Action Toolbar (Copy, Regenerate, Feedback)
+      const actionToolbarHtml = `
+        <div class="chat-action-toolbar">
+          <button class="chat-action-btn" title="Copy answer" onclick="copyMessageText(this)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 v1"/></svg>
+            <span>Copy</span>
+          </button>
+          <button class="chat-action-btn" title="Regenerate response" onclick="regenerateLastResponse('${escapeHtml(promptText).replace(/'/g, "\\'")}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M2.5 16l1.2 0.8A10 10 0 0 0 22 12.5"/></svg>
+            <span>Regenerate</span>
+          </button>
+          <button class="chat-action-btn feedback-up" title="Helpful" onclick="toggleFeedback(this, 'up')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          </button>
+          <button class="chat-action-btn feedback-down" title="Not helpful" onclick="toggleFeedback(this, 'down')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+          </button>
+        </div>
+      `;
+
+      // Follow-up suggestion chips
+      const followUpChipsHtml = `
+        <div class="followup-chips-container">
+          <button class="followup-chip-btn" onclick="sendFollowUpQuestion('Explain this in simple words')">💡 Explain simply</button>
+          <button class="followup-chip-btn" onclick="sendFollowUpQuestion('Give me a 10-mark answer')">📝 Give 10-mark answer</button>
+          <button class="followup-chip-btn" onclick="sendFollowUpQuestion('Give a practical example')">📌 Give an example</button>
+          <button class="followup-chip-btn" onclick="sendFollowUpQuestion('What are its main advantages?')">⚡ What are its advantages?</button>
+        </div>
+      `;
+
       if (isFirstChunk) {
-        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer || "No answer generated.");
+        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer || "No answer generated.") + actionToolbarHtml + followUpChipsHtml;
       } else {
-        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer) + sourcesHtml;
+        streamTarget.innerHTML = renderMarkdown(accumulatedAnswer) + sourcesHtml + actionToolbarHtml + followUpChipsHtml;
       }
       
       scrollToBottom();
       setTimeout(scrollToBottom, 60);
       isStreaming = false;
-      loadChatHistory(); // Refresh history from MySQL
-
+      loadChatHistory(); // Refresh history
     } catch (err) {
       console.error("VTUva Chat API Error:", err);
       streamTarget.innerHTML = `
@@ -347,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <strong>⚠️ Unable to connect to VTUva Backend</strong><br/>
           ${escapeHtml(err.message)}<br/>
           <span style="font-size: 12px; color: #9ca3af; margin-top: 4px; display: inline-block;">
-            Make sure FastAPI server & MySQL database are running: <code>python backend/main.py</code>.
+            Make sure FastAPI server is running: <code>python backend/main.py</code>.
           </span>
         </div>
       `;
@@ -355,10 +385,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 8. FETCH & RENDER CHAT HISTORY (GET /api/chat/history)
-  async function loadChatHistory() {
+  // 8. DYNAMIC SUBJECT DROPDOWN & PROMPT BUILDER
+  function populateSubjectDropdown() {
+    const subjectSelect = document.getElementById('subject-select');
+    if (!subjectSelect) return;
+
+    let subjects = [];
     try {
-      const res = await fetch(`${API_BASE_URL}/api/chat/history`, {
+      const cached = localStorage.getItem('vtu_selected_subjects');
+      if (cached) subjects = JSON.parse(cached);
+    } catch (e) {}
+
+    if (!subjects || subjects.length === 0) {
+      subjects = [
+        { code: 'BCS501', name: 'Software Engineering and Project Management' },
+        { code: 'BCS502', name: 'Database Management Systems' },
+        { code: 'BCS504', name: 'Computer Networks' }
+      ];
+    }
+
+    let optionsHtml = `<option value="All">📚 All Subjects</option><option value="General">💬 General</option>`;
+    subjects.forEach(s => {
+      const shortName = (s.name || '').split(' ')[0];
+      optionsHtml += `<option value="${escapeHtml(s.code)}">📘 ${escapeHtml(s.code)}${shortName ? ' (' + escapeHtml(shortName) + ')' : ''}</option>`;
+    });
+
+    subjectSelect.innerHTML = optionsHtml;
+  }
+
+  function getSubjectPrompt(code, action = 'imp_questions') {
+    if (action === 'imp_questions' || action === 'notes') {
+      return `Can you give most imp questions?`;
+    } else if (action === 'pyqs') {
+      return `Can you show top repeated PYQs for ${code}?`;
+    } else if (action === 'quizzes') {
+      return `Can you create a practice quiz for ${code}?`;
+    } else {
+      return `Can you give me a study plan for ${code}?`;
+    }
+  }
+
+  // 9. FETCH & RENDER CHAT HISTORY (GET /api/chat/history)
+  async function loadChatHistory(filterSubject = null) {
+    try {
+      const subjectSelect = document.getElementById('subject-select');
+      const activeSub = filterSubject !== null ? filterSubject : (subjectSelect?.value || 'All');
+
+      let url = `${API_BASE_URL}/api/chat/history`;
+      if (activeSub && activeSub !== 'All') {
+        url += `?subject=${encodeURIComponent(activeSub)}`;
+      }
+
+      // Update Sidebar Header to display active subject tag
+      const recentChatsHeader = document.getElementById('recent-chats-header');
+      if (recentChatsHeader) {
+        if (activeSub && activeSub !== 'All') {
+          recentChatsHeader.innerHTML = `Recent Chats <span style="font-size: 10px; background: rgba(99, 102, 241, 0.25); color: #a5b4fc; padding: 1px 6px; border-radius: 4px; font-weight: bold;">${escapeHtml(activeSub)}</span>`;
+        } else {
+          recentChatsHeader.textContent = 'Recent Chats (All)';
+        }
+      }
+
+      const res = await fetch(url, {
         headers: {
           'X-User-ID': currentUserId,
         }
@@ -368,37 +456,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const history = await res.json();
       chatHistoryCache = history;
 
-      // Render Sidebar Recent Chats (Latest first)
+      // Render Sidebar Recent Chats (Latest first for that subject)
       if (recentChatsList) {
         if (history.length === 0) {
-          recentChatsList.innerHTML = `<li style="padding: 10px 14px; font-size: 12.5px; color: var(--text-muted);">No chat history yet</li>`;
+          recentChatsList.innerHTML = `<li style="padding: 10px 14px; font-size: 12.5px; color: var(--text-muted);">No chats stored for ${escapeHtml(activeSub)}</li>`;
         } else {
           const reversed = history.slice().reverse();
           recentChatsList.innerHTML = reversed.map(item => `
             <li class="recent-item" data-id="${item.id}" onclick="displayStoredChat(${item.id})">
               <svg class="recent-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-              <div class="recent-info">
-                <div class="recent-title">${escapeHtml(item.question)}</div>
+              <div class="recent-info" style="width: 100%; overflow: hidden;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+                  <div class="recent-title">${escapeHtml(item.question)}</div>
+                  <span style="font-size: 10px; background: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 1px 5px; border-radius: 4px; shrink: 0;">${escapeHtml(item.subject || 'General')}</span>
+                </div>
                 <div class="recent-time">${formatTimeAgo(item.created_at)}</div>
               </div>
             </li>
-          `).join('');
-        }
-      }
-
-      // Render Dashboard Recent Questions
-      if (dashboardRecentQuestions) {
-        if (history.length === 0) {
-          dashboardRecentQuestions.innerHTML = `<div style="color: var(--text-sub); font-size: 13.5px; padding: 8px 0;">No previous questions found. Ask a question below!</div>`;
-        } else {
-          dashboardRecentQuestions.innerHTML = history.map((item, index) => `
-            <div class="recent-question-card">
-              <div class="recent-question-info">
-                <span class="question-number">${index + 1}.</span>
-                <span class="question-text">${escapeHtml(item.question)}</span>
-              </div>
-              <button class="btn-view-answer" onclick="displayStoredChat(${item.id})">View Answer</button>
-            </div>
           `).join('');
         }
       }
@@ -416,6 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesList.innerHTML = `
       <div class="message-wrapper user">
         <div class="user-bubble">
+          <div style="font-size: 11px; opacity: 0.75; margin-bottom: 2px;">📌 ${escapeHtml(item.subject || 'General')}</div>
           <span>${escapeHtml(item.question)}</span>
         </div>
       </div>
@@ -430,12 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  refreshHistoryLink?.addEventListener('click', (e) => {
-    e.preventDefault();
-    loadChatHistory();
-    showToast('Chat history updated');
-  });
-
   function formatTimeAgo(dateString) {
     if (!dateString) return 'recently';
     const date = new Date(dateString);
@@ -446,10 +515,34 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${Math.floor(diffSec / 86400)}d ago`;
   }
 
-  // 9. MARKDOWN RENDERER
+  // 9. MARKDOWN RENDERER & INTERACTION HELPERS
   function renderMarkdown(str) {
     if (!str) return '';
     let html = str;
+
+    // Markdown Tables
+    html = html.replace(/((?:\|[^\n]+\|\n?)+)/g, (match) => {
+      const rows = match.trim().split('\n').filter(r => r.trim());
+      if (rows.length < 2) return match;
+      
+      let tableHtml = '<div style="overflow-x:auto; margin:14px 0;"><table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border:1px solid #1a1a22; border-radius:10px; overflow:hidden;">';
+      
+      rows.forEach((rowStr, idx) => {
+        if (rowStr.includes('---')) return; // Skip delimiter row
+        const cells = rowStr.split('|').slice(1, -1).map(c => c.trim());
+        if (idx === 0) {
+          tableHtml += '<thead style="background:#14141a; color:#a5b4fc; border-bottom:1px solid #1a1a22;"><tr>';
+          cells.forEach(c => { tableHtml += `<th style="padding:10px 14px; font-weight:600;">${c}</th>`; });
+          tableHtml += '</tr></thead><tbody>';
+        } else {
+          tableHtml += '<tr style="border-bottom:1px solid #14141a;">';
+          cells.forEach(c => { tableHtml += `<td style="padding:9px 14px; color:#e2e8f0;">${c}</td>`; });
+          tableHtml += '</tr>';
+        }
+      });
+      tableHtml += '</tbody></table></div>';
+      return tableHtml;
+    });
 
     // Code blocks
     html = html.replace(/```(python|js|json|html|bash)?\n([\s\S]*?)```/g, (match, lang, code) => {
@@ -470,18 +563,56 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bold
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-    // Headings ###
+    // Blockquotes
+    html = html.replace(/^>\s+(.*)$/gm, '<blockquote style="border-left:3px solid #6366f1; padding-left:12px; margin:10px 0; color:#a5b4fc; font-style:italic;">$1</blockquote>');
+
+    // Headings ### & ## & #
     html = html.replace(/### (.*?)\n/g, '<h3 style="font-size:16px; font-weight:600; margin:14px 0 6px 0; color:#f3f4f6;">$1</h3>');
     html = html.replace(/## (.*?)\n/g, '<h2 style="font-size:18px; font-weight:700; margin:16px 0 8px 0; color:#f3f4f6;">$1</h2>');
+    html = html.replace(/# (.*?)\n/g, '<h1 style="font-size:20px; font-weight:800; margin:18px 0 10px 0; color:#ffffff;">$1</h1>');
+
+    // Numbered List Items e.g. "1. Question text..."
+    html = html.replace(/^\s*(\d+)\.\s+(.*)$/gm, '<div style="margin: 8px 0 8px 8px; line-height: 1.6; display: flex; gap: 8px;"><span style="font-weight:700; color:#818cf8; shrink: 0;">$1.</span><div>$2</div></div>');
 
     // Bullet points
     html = html.replace(/^\s*[\-\*]\s+(.*)$/gm, '<li style="margin-left:18px; margin-bottom:4px;">$1</li>');
 
-    // Line breaks
-    html = html.replace(/\n\n/g, '<br/><br/>');
+    // Preserve newlines cleanly
+    html = html.replace(/\n/g, '<br/>');
 
     return html;
   }
+
+  window.copyMessageText = function(btn) {
+    const wrapper = btn.closest('.assistant-content');
+    if (!wrapper) return;
+    const textStream = wrapper.querySelector('.text-stream');
+    if (textStream) {
+      const text = textStream.innerText || textStream.textContent;
+      navigator.clipboard.writeText(text);
+      showToast('Answer copied to clipboard! 📋');
+    }
+  };
+
+  window.regenerateLastResponse = function(promptText) {
+    if (isStreaming) return;
+    showToast('Regenerating answer... 🔄');
+    const historyContext = getCurrentChatContext();
+    const activeSubject = document.getElementById('subject-select')?.value || 'General';
+    fetchRAGAnswer(promptText, historyContext, activeSubject);
+  };
+
+  window.toggleFeedback = function(btn, type) {
+    btn.classList.toggle('active');
+    showToast(type === 'up' ? 'Feedback recorded: Helpful! 👍' : 'Feedback recorded: Thank you! 👎');
+  };
+
+  window.sendFollowUpQuestion = function(followUpText) {
+    if (chatInput) {
+      chatInput.value = followUpText;
+      handleSend();
+    }
+  };
 
   function escapeHtml(string) {
     return String(string)
@@ -492,7 +623,14 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/'/g, '&#039;');
   }
 
-  // 10. NEW CHAT RESET
+  // 10. NEW CHAT RESET & CLEAR CHAT
+  const btnClearChat = document.getElementById('btn-clear-chat');
+  btnClearChat?.addEventListener('click', () => {
+    messagesList.innerHTML = '';
+    if (chatInput) chatInput.value = '';
+    showToast('Cleared chat view');
+  });
+
   newChatBtn?.addEventListener('click', () => {
     messagesList.innerHTML = '';
     switchView('home');
@@ -527,6 +665,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // INITIAL LOAD
-  loadChatHistory();
+  // 12. SUBJECT SELECTOR FILTER LISTENER
+  const subjectSelectEl = document.getElementById('subject-select');
+  subjectSelectEl?.addEventListener('change', () => {
+    const selectedSub = subjectSelectEl.value;
+    loadChatHistory(selectedSub);
+    showToast(`Showing history for ${selectedSub}`);
+  });
+
+  // INITIAL LOAD & URL PARAMETERS HANDLER
+  populateSubjectDropdown();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetSubject = urlParams.get('subject');
+  const targetAction = urlParams.get('action') || 'notes';
+
+  if (targetSubject) {
+    if (subjectSelectEl) {
+      let optionExists = Array.from(subjectSelectEl.options).some(opt => opt.value === targetSubject);
+      if (!optionExists) {
+        const opt = document.createElement('option');
+        opt.value = targetSubject;
+        opt.textContent = `📘 ${targetSubject}`;
+        subjectSelectEl.appendChild(opt);
+      }
+      subjectSelectEl.value = targetSubject;
+    }
+
+    // Filter chat history specifically for this subject
+    loadChatHistory(targetSubject);
+
+    // Switch view to AI Chat
+    switchView('chat');
+
+    // Populate clean question in input bar for user to ask
+    const promptText = getSubjectPrompt(targetSubject, targetAction);
+    if (chatInput && promptText) {
+      chatInput.value = promptText;
+      chatInput.focus();
+    }
+
+    // Clean URL query string
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else {
+    loadChatHistory();
+  }
 });

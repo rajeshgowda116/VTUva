@@ -89,140 +89,203 @@ def get_llm(model_override: str = None):
     return None
 
 
-def build_prompt(question: str, context: str) -> str:
+def build_prompt(question: str, context: str, subject: str = "General") -> str:
     """
-    Strict RAG prompt builder:
-    - Detects 5-Mark or 10-Mark exam request intents and builds structured VTU exam answer formats.
-    - Instructs LLM to answer ONLY from retrieved CONTEXT chunks.
-    - If answer is not present in CONTEXT, LLM MUST reply clearly that it is not present in ingested VTU syllabus documents.
+    Subject-focused VTU RAG prompt builder with ChatGPT-style conversational directness
+    and specialized answer modes (10-mark, 5-mark, notes, pyqs, comparisons, simple explanations).
     """
     q_lower = question.lower().strip()
-    
-    is_list_intent = (
-        re.search(r"\b(list|give|show|what\s+are|get)\b", q_lower) and 
-        re.search(r"\b(question|questions|pyq|pyqs|important\s+questions|repeated\s+questions)\b", q_lower) and
-        not re.search(r"\b(explain|describe|solve|answer|solution|write\s+an?\s+answer)\b", q_lower)
-    )
+    subj_code = subject.strip() if subject and subject.strip() and subject.strip() not in ("General", "All") else ""
 
+    if subj_code:
+        full_instruction = f"Please provide only {subj_code.lower()} subject answers only if he asked 5 marks explain 5 marks he asked 10 marks answer 10 marks explain simple way: {question}"
+    else:
+        full_instruction = f"Please provide only accurate VTU subject answers only if he asked 5 marks explain 5 marks he asked 10 marks answer 10 marks explain simple way: {question}"
+
+    is_list_questions_mode = bool(re.search(
+        r"\b(imp\s+questions?|important\s+questions?|most\s+imp|give\s+imp|list\s+questions?|show\s+questions?|pyqs?|repeated\s+questions?|frequently\s+asked)\b",
+        q_lower
+    )) and not bool(re.search(
+        r"\b(explain\s+question|answer\s+question|solve|give\s+an?\s+answer|how\s+to\s+solve|10\s*marks?\s+answer|5\s*marks?\s+answer)\b",
+        q_lower
+    ))
+
+    is_notes_mode = bool(re.search(r"\b(make\s+notes|create\s+notes|module\s*\d+\s*notes|syllabus\s+notes|notes\s+for)\b", q_lower))
+    is_compare_mode = bool(re.search(r"\b(compare|difference\s+between|vs\.?|distinguish)\b", q_lower))
     is_5_marks = bool(re.search(r"\b(4\s*marks?|4\s*mark|5\s*marks?|5\s*mark|four\s*marks?|five\s*marks?)\b", q_lower))
     is_7_marks = bool(re.search(r"\b(6\s*marks?|6\s*mark|7\s*marks?|7\s*mark|six\s*marks?|seven\s*marks?)\b", q_lower))
     is_10_marks = bool(re.search(r"\b(8\s*marks?|8\s*mark|10\s*marks?|10\s*mark|eight\s*marks?|ten\s*marks?)\b", q_lower))
+    is_short_def = bool(re.search(r"\b(define|what\s+is\s+a|what\s+is|short\s+note|definition)\b", q_lower)) and not (is_5_marks or is_10_marks or is_notes_mode or is_list_questions_mode)
 
-    if is_list_intent:
-        return f"""You are VTUva, a VTU engineering study assistant.
+    # 1. LIST IMPORTANT QUESTIONS MODE (QUESTIONS ONLY — NO DETAILED ANSWERS)
+    if is_list_questions_mode:
+        return f"""You are VTUva, an expert VTU Examination Assistant.
 
-STRICT CONSTRAINTS:
-1. Output ONLY information present in the CONTEXT.
-2. Provide a clean list of questions grouped logically.
-3. If CONTEXT does not contain questions for the requested topic, respond EXACTLY with:
-   "This topic is not present in the ingested VTU syllabus/notes documents."
+USER REQUEST: {question}
+SUBJECT CODE: {subj_code if subj_code else 'VTU Subject'}
 
-CONTEXT:
+CRITICAL INSTRUCTIONS:
+1. Output ONLY THE LIST OF IMPORTANT QUESTIONS. Do NOT generate full detailed answers, explanations, or solutions for each question.
+2. Structure the output clearly using Markdown headers for each module (e.g. ### Module 1: [Module Title]).
+3. Format each question on its OWN line as a numbered item with a bold mark weightage tag:
+   1. **[10 Marks]** Question text...
+   2. **[5 Marks]** Question text...
+4. Make sure each question appears on a separate line with clean spacing.
+5. End with this exact note:
+   > 💡 *To get the step-by-step solution for any question above, simply ask "Explain Question 1" or "Give 10-mark answer for [Topic]".*
+
+CONTEXT FROM VTU DOCUMENTS:
 {context}
 
-STUDENT QUESTION:
-{question}
-
-QUESTION LIST:
+CLEAN STRUCTURED QUESTION LIST (QUESTIONS ONLY — NO LONG ANSWERS):
 """
 
+    # 2. NOTES MODE
+    if is_notes_mode:
+        return f"""You are VTUva, an expert VTU Academic Assistant.
+
+USER REQUEST:
+{full_instruction}
+
+STRICT CONSTRAINTS:
+1. Start directly with the module notes title.
+2. Structure the notes cleanly as follows:
+   # Module — [Topic / Subject]
+   ## Important Concepts
+   - Bullet points of main concepts with bold terms.
+   ## Key Definitions
+   - Clear definitions of core terms.
+   ## Important Questions
+   - List of key exam questions for this module.
+   ## Quick Revision
+   - 3-4 bullet summary points for rapid revision.
+
+CONTEXT FROM VTU DOCUMENTS:
+{context}
+
+MODULE NOTES:
+"""
+
+    # 2. PYQ / REPEATED QUESTIONS MODE
+    if is_pyq_mode:
+        return f"""You are VTUva, an expert VTU Previous Year Questions Evaluator.
+
+USER REQUEST:
+{full_instruction}
+
+STRICT CONSTRAINTS:
+1. Start directly with a clean markdown table of frequently asked questions.
+2. Structure as follows:
+   ## Frequently Asked Questions — {subj_code if subj_code else 'VTU Exam'}
+   | Question | Weightage / Frequency | Key Focus Area |
+   |---|---|---|
+3. Only display frequency/years if present or supported by VTU document evidence.
+4. Follow the table with 2-3 practical exam preparation tips.
+
+CONTEXT FROM VTU DOCUMENTS:
+{context}
+
+PYQ SUMMARY:
+"""
+
+    # 3. COMPARISON MODE
+    if is_compare_mode:
+        return f"""You are VTUva, an expert VTU Academic Assistant.
+
+USER REQUEST:
+{full_instruction}
+
+STRICT CONSTRAINTS:
+1. Start directly with the comparison.
+2. Use a clean Markdown table comparing the topics point-by-point (Definition, Working, Features, Applications, Key Differences).
+3. Follow with a short concluding summary paragraph.
+
+CONTEXT FROM VTU DOCUMENTS:
+{context}
+
+COMPARISON TABLE ANSWER:
+"""
+
+    # 4. 5-MARK EXAM MODE
     if is_5_marks:
         return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
 
-The student specifically requested a **5-MARK VTU EXAM ANSWER** for: "{question}".
+USER REQUEST:
+{full_instruction}
 
-STRICT CONSTRAINTS & RULES:
-1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
-2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
-3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
-   "This topic is not present in the ingested VTU syllabus/notes documents."
-4. Structure the output into a clean, high-scoring 5-MARK VTU EXAM FORMAT:
-   - 🎯 **Header**: Topic Title & Marks Weightage (5 Marks)
-   - 📌 **1. Definition / Overview**: 2-3 concise sentences explaining the concept.
-   - 🔑 **2. Key Components / Core Principles**: 4-5 structured bullet points with bold keywords.
-   - 📊 **3. Block Diagram / Flowchart (ASCII)**: A clean ASCII block diagram or structural flowchart if applicable.
-   - ⚡ **4. Advantages & Disadvantages / Key Characteristics**: 3-4 distinct bullet points.
+STRICT CONSTRAINTS & 5-MARK STRUCTURE:
+1. Start directly with the topic header: ## [Topic Title] (5-Mark Response)
+2. **Definition / Overview**: 2-3 clear, concise sentences in plain English.
+3. **5 Core Key Points**: 5 numbered points with **bold terms** explained simply.
+4. **Simple ASCII Diagram / Flowchart**: Clean block diagram if applicable.
+5. **Key Applications / Features**: Short bullet points.
+6. Conclude with: > *Note: This answer is structured for a 5-mark VTU-style response.*
 
-CONTEXT:
+CONTEXT FROM VTU DOCUMENTS:
 {context}
-
-STUDENT QUESTION:
-{question}
 
 5-MARK VTU EXAM ANSWER:
 """
 
-    if is_7_marks:
+    # 5. 10-MARK EXAM MODE
+    if is_7_marks or is_10_marks:
+        marks_label = "7-MARK" if is_7_marks else "10-MARK"
         return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
 
-The student specifically requested a **7-MARK VTU EXAM ANSWER** for: "{question}".
+USER REQUEST:
+{full_instruction}
 
-STRICT CONSTRAINTS & RULES:
-1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
-2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
-3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
-   "This topic is not present in the ingested VTU syllabus/notes documents."
-4. Structure the output into a high-scoring, well-balanced 7-MARK VTU EXAM FORMAT:
-   - 🎯 **Header**: Topic Title & Marks Weightage (7 Marks)
-   - 📌 **1. Definition & Core Concept**: Clear 3-4 sentence introductory explanation.
-   - 📐 **2. Structural Block Diagram / Flowchart (ASCII)**: A clean ASCII diagram or architectural chart.
-   - 🔑 **3. Key Phases / Core Principles / Detailed Working**: 5-6 numbered points with bold technical VTU keywords.
-   - 💡 **4. Real-World Application / Key Characteristics**: 3-4 distinct points explaining usage or advantages.
-   - ⚡ **5. Key Strengths & Limitations**: Concise bullet points highlighting pros and cons.
+STRICT CONSTRAINTS & {marks_label} STRUCTURE:
+1. Start directly with the topic header: ## [Topic Title] ({marks_label} Response)
+2. **Definition & Introduction**: Clear introductory section explaining the core concept.
+3. **Architecture / Structural Diagram**: Labeled ASCII diagram or flowchart breakdown.
+4. **Detailed Components & Working Principle**:
+   - Numbered/bulleted sections for all core components with **bold keywords**.
+   - Step-by-step explanation of working procedure.
+5. **Practical Applications & Real-World Use**: Specific engineering applications.
+6. **Key Advantages & Limitations**: Bullet points or simple summary table.
+7. Conclude with: > *Note: This answer is structured for a {marks_label.lower()} VTU-style response.*
 
-CONTEXT:
+CONTEXT FROM VTU DOCUMENTS:
 {context}
 
-STUDENT QUESTION:
-{question}
-
-7-MARK VTU EXAM ANSWER:
+{marks_label} VTU EXAM ANSWER:
 """
 
-    if is_10_marks:
-        return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+    # 6. SHORT DEFINITION / DEFAULT NATURAL RESPONSE
+    if is_short_def:
+        return f"""You are VTUva, a conversational VTU Academic Assistant.
 
-The student specifically requested a **10-MARK VTU EXAM ANSWER** for: "{question}".
+USER REQUEST:
+{full_instruction}
 
-STRICT CONSTRAINTS & RULES:
-1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
-2. Do NOT invent facts or use outside knowledge if the concept is missing from CONTEXT.
-3. If CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
-   "This topic is not present in the ingested VTU syllabus/notes documents."
-4. Structure the output into a comprehensive, full-credit 10-MARK VTU EXAM FORMAT:
-   - 🎯 **Header**: Topic Title & Marks Weightage (10 Marks)
-   - 📖 **1. Comprehensive Definition & Introduction**: Clear, exam-ready overview paragraph.
-   - 📐 **2. Labeled Architecture / Flowchart Diagram**: Provide a detailed ASCII diagram or process chart.
-   - ⚙️ **3. Core Phases / Components / Detailed Explanation**: 6-8 comprehensive sections with bold technical VTU keywords.
-   - 💡 **4. Practical Example / Use Case**: An illustrative scenario or implementation example.
-   - ⚖️ **5. Comparison / Pros & Cons Table**: Markdown table or categorized bullet points.
-   - 📝 **6. Conclusion**: Summary wrap-up.
+STRICT CONSTRAINTS:
+1. Start directly with a clear, concise definition (2-4 sentences).
+2. Follow with 3-4 bullet points highlighting key characteristics or applications.
+3. Do NOT add conversational preamble or filler.
 
-CONTEXT:
+CONTEXT FROM VTU DOCUMENTS:
 {context}
 
-STUDENT QUESTION:
-{question}
-
-10-MARK VTU EXAM ANSWER:
+CONCISE DEFINITION ANSWER:
 """
 
-    return f"""You are VTUva, an expert VTU engineering study assistant.
+    # 7. GENERAL CONVERSATIONAL EXPLANATION
+    return f"""You are VTUva, a professional, conversational VTU Academic Assistant (ChatGPT-style response).
 
-STRICT CONSTRAINTS & RULES:
-1. Answer the student's question ONLY using the facts provided in the CONTEXT below.
-2. Do NOT use outside knowledge or invent answers if the specific topic/solution is not present in the CONTEXT.
-3. If the CONTEXT does not contain enough information to answer the question, reply EXACTLY with:
-   "This topic is not present in the ingested VTU syllabus/notes documents."
-4. Format the answer in a clean, exam-oriented structure with clear headings, bold VTU keywords, and structured bullet points.
+USER REQUEST:
+{full_instruction}
 
-CONTEXT:
+STRICT CONSTRAINTS:
+1. Start directly with the answer. Avoid preamble (e.g. "Sure, I can help").
+2. Use Markdown formatting: headings (##, ###), bold key terms, bullet points, short readable paragraphs, code blocks, and clear math formatting.
+3. Keep the length proportional to what the user asked (concise for simple questions, thorough for detailed questions).
+4. Strictly ground facts in the retrieved VTU context without inventing unverified syllabus details.
+
+CONTEXT FROM VTU DOCUMENTS:
 {context}
 
-STUDENT QUESTION:
-{question}
-
-ANSWER:
+NATURAL VTU RESPONSE:
 """
 
 
@@ -243,7 +306,7 @@ def extract_text_from_chunk(chunk) -> str:
     return str(content) if content else ""
 
 
-def generate_answer(question: str, context: str) -> str:
+def generate_answer(question: str, context: str, subject: str = "General") -> str:
     if not context or not context.strip():
         return "This topic is not present in the ingested VTU syllabus/notes documents."
 
@@ -252,7 +315,7 @@ def generate_answer(question: str, context: str) -> str:
         try:
             import google.genai as genai
             client = genai.Client(api_key=google_api_key.strip())
-            prompt = build_prompt(question, context)
+            prompt = build_prompt(question, context, subject=subject)
             models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-1.5-flash-8b"]
             for m in models:
                 try:
@@ -274,7 +337,7 @@ def generate_answer(question: str, context: str) -> str:
             f"{context[:400]}..."
         )
 
-    prompt = build_prompt(question, context)
+    prompt = build_prompt(question, context, subject=subject)
     try:
         response = llm.invoke(prompt)
         return extract_text_from_chunk(response)
@@ -282,7 +345,7 @@ def generate_answer(question: str, context: str) -> str:
         return f"⚠️ Error generating answer: {e}"
 
 
-def generate_answer_stream(question: str, context: str) -> Generator[str, None, None]:
+def generate_answer_stream(question: str, context: str, subject: str = "General") -> Generator[str, None, None]:
     """Yields generated tokens one by one with fast zero-sleep fallback."""
     if not context or not context.strip():
         yield "This topic is not present in the ingested VTU syllabus/notes documents."
@@ -293,7 +356,7 @@ def generate_answer_stream(question: str, context: str) -> Generator[str, None, 
         try:
             import google.genai as genai
             client = genai.Client(api_key=google_api_key.strip())
-            prompt = build_prompt(question, context)
+            prompt = build_prompt(question, context, subject=subject)
             models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-1.5-flash-8b"]
             
             for m in models:
@@ -317,7 +380,7 @@ def generate_answer_stream(question: str, context: str) -> Generator[str, None, 
         yield "⚠️ **LLM Provider Configuration Missing**: Please set `GOOGLE_API_KEY` in `.env`."
         return
 
-    prompt = build_prompt(question, context)
+    prompt = build_prompt(question, context, subject=subject)
     try:
         for chunk in llm.stream(prompt):
             text_chunk = extract_text_from_chunk(chunk)

@@ -47,7 +47,7 @@ class ScrapedDocument(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    versions = relationship("ScrapedDocumentVersion", back_populates="document", cascade="all, delete-orphan")
+    # versions relationship omitted to prevent duplicate mapping conflicts
 
 
 class ScrapedDocumentVersion(Base):
@@ -62,8 +62,6 @@ class ScrapedDocumentVersion(Base):
     scraped_at = Column(DateTime(timezone=True), server_default=func.now())
     changed_at = Column(DateTime(timezone=True), server_default=func.now())
     change_type = Column(String(30), nullable=False)  # NEW, UPDATED, REMOVED
-
-    document = relationship("ScrapedDocument", back_populates="versions")
 
 
 class ScrapeRun(Base):

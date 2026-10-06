@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - Confirm Selection (Step 4 of 4){% endblock %}
+
+{% block nav_sem %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-8 py-8 overflow-y-auto z-10 bg-[#060608]">
+  <!-- Dark Setup Card -->
+  <div class="max-w-[1000px] mx-auto bg-[#0d0d10] rounded-[24px] shadow-2xl border border-[#1a1a22] p-8 pt-6 relative flex flex-col text-gray-100">
+    
+    <!-- Back Button -->
+    <a href="/subject.html" class="flex items-center gap-2 text-indigo-400 font-medium text-[15px] hover:text-indigo-300 transition-colors w-fit absolute top-8 left-8 z-10 no-underline">
+      <span class="material-symbols-outlined text-lg">arrow_back</span>
+      Back
+    </a>
+
+    <!-- Stepper Progress -->
+    <div class="relative flex justify-between w-full max-w-[520px] mx-auto mt-2 mb-10">
+      <!-- Connecting line background -->
+      <div class="absolute top-[15px] left-[30px] right-[30px] h-[2px] bg-indigo-600 -z-10 flex">
+        <div class="w-full h-full bg-indigo-600"></div>
+      </div>
+      
+      <!-- Step 1 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Semester</span>
+      </div>
+      
+      <!-- Step 2 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Branch</span>
+      </div>
+      
+      <!-- Step 3 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Subjects</span>
+      </div>
+      
+      <!-- Step 4 (Active) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center text-sm font-semibold shadow-md shadow-indigo-500/30">4</div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Confirm</span>
+      </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="mb-6">
+      <h2 class="text-[32px] font-bold text-white mb-1.5 tracking-tight">Confirm Your Selection</h2>
+      <p class="text-[16px] text-gray-400">Please review your academic details before saving.</p>
+    </div>
+
+    <!-- Academic Details Card -->
+    <div class="border border-[#1a1a22] bg-[#060608] rounded-[16px] p-6 mb-5">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="material-symbols-outlined filled text-indigo-400 text-[24px]">school</span>
+        <h3 class="font-bold text-white text-[16px]">Academic Details</h3>
+      </div>
+      
+      <div class="space-y-3">
+        <!-- Row 1: Semester -->
+        <div class="flex items-center">
+          <div class="flex items-center gap-3 w-[160px] text-gray-300">
+            <span class="material-symbols-outlined text-[20px] text-gray-400">calendar_month</span>
+            <span class="font-bold text-[14.5px] text-white">Semester</span>
+          </div>
+          <div class="flex-1 bg-[#14141a] text-gray-200 text-[14.5px] px-4 py-2.5 rounded-[10px] border border-[#1a1a22]" id="confirm-sem-val">
+            5th Semester
+          </div>
+        </div>
+        
+        <!-- Row 2: Branch -->
+        <div class="flex items-center">
+          <div class="flex items-center gap-3 w-[160px] text-gray-300">
+            <span class="material-symbols-outlined text-[20px] text-gray-400">domain</span>
+            <span class="font-bold text-[14.5px] text-white">Branch</span>
+          </div>
+          <div class="flex-1 bg-[#14141a] text-gray-200 text-[14.5px] px-4 py-2.5 rounded-[10px] border border-[#1a1a22]" id="confirm-branch-val">
+            Artificial Intelligence & Machine Learning (AIML)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Subjects Card -->
+    <div class="border border-[#1a1a22] bg-[#060608] rounded-[16px] p-6 mb-8">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined filled text-indigo-400 text-[24px]">menu_book</span>
+          <h3 class="font-bold text-white text-[16px]" id="confirm-subj-count">Selected Subjects (3)</h3>
+        </div>
+        <a href="/subject.html" class="flex items-center gap-1.5 border border-indigo-500/50 text-indigo-400 hover:bg-indigo-950/40 px-4 py-1.5 rounded-lg text-[13.5px] font-medium transition-colors no-underline">
+          <span class="material-symbols-outlined text-[16px]">edit</span>
+          Edit Selection
+        </a>
+      </div>
+      
+      <!-- Subject List -->
+      <div class="space-y-2.5" id="confirm-subj-list">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+
+    <!-- Footer Buttons -->
+    <div class="mt-auto flex justify-between items-center">
+      <a href="/subject.html" class="bg-[#14141a] border border-[#1a1a22] text-indigo-400 hover:text-indigo-300 font-medium text-[15px] px-8 py-3 rounded-xl flex items-center gap-2 transition-colors no-underline">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        Previous
+      </a>
+      <a href="/allsubject.html" id="btn-save-confirm" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold text-[15px] px-10 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all no-underline">
+        <span>Save & Continue</span>
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const semVal = localStorage.getItem('vtu_selected_sem') || '5th Semester';
+    const branchCode = localStorage.getItem('vtu_selected_branch') || 'AIML';
+    const branchFull = localStorage.getItem('vtu_selected_branch_full') || 'Artificial Intelligence & Machine Learning (AIML)';
+    const subjects = JSON.parse(localStorage.getItem('vtu_selected_subjects')) || [
+      { code: 'BCS501', name: 'Software Engineering and Project Management' },
+      { code: 'BCS502', name: 'Database Management Systems' },
+      { code: 'BCS504', name: 'Computer Networks' }
+    ];
+
+    document.getElementById('confirm-sem-val').textContent = semVal;
+    document.getElementById('confirm-branch-val').textContent = branchFull;
+    document.getElementById('confirm-subj-count').textContent = `Selected Subjects (${subjects.length})`;
+
+    const subjContainer = document.getElementById('confirm-subj-list');
+    subjContainer.innerHTML = subjects.map(s => `
+      <div class="flex items-center justify-between bg-[#14141a] border border-[#1a1a22] rounded-[10px] px-5 py-3.5">
+        <div class="flex items-center gap-5">
+          <span class="font-bold text-white text-[14.5px] w-[65px]">${s.code}</span>
+          <div class="w-[1.5px] h-[18px] bg-gray-700"></div>
+          <span class="text-gray-300 text-[14.5px]">${s.name}</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-indigo-950/50 text-indigo-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled text-[20px]">description</span>
+        </div>
+      </div>
+    `).join('');
+
+    const saveBtn = document.getElementById('btn-save-confirm');
+    saveBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const payload = {
+          name: "Rajesh Gouda",
+          usn: "4DM24AI038",
+          semester: semVal,
+          branch: branchCode,
+          branch_full: branchFull,
+          subjects: subjects
+        };
+        const res = await fetch('/api/user/profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': '1'
+          },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          console.log('[SQL Database] Saved user profile to SQL database successfully');
+        }
+      } catch (err) {
+        console.error('Failed to save to SQL DB:', err);
+      }
+      window.location.href = '/allsubject.html';
+    });
+  });
+</script>
+{% endblock %}

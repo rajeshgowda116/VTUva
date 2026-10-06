@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - Select Branch (Step 2 of 4){% endblock %}
+
+{% block nav_sem %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-8 py-8 overflow-y-auto z-10 bg-[#060608]">
+  <!-- Dark Setup Card -->
+  <div class="max-w-[1000px] mx-auto bg-[#0d0d10] rounded-[24px] shadow-2xl border border-[#1a1a22] p-8 pt-6 relative min-h-[550px] flex flex-col text-gray-100">
+    
+    <!-- Back Button -->
+    <a href="/sem.html" class="flex items-center gap-2 text-indigo-400 font-medium text-[15px] hover:text-indigo-300 transition-colors w-fit absolute top-8 left-8 z-10 no-underline">
+      <span class="material-symbols-outlined text-lg">arrow_back</span>
+      Back
+    </a>
+
+    <!-- Stepper Progress -->
+    <div class="relative flex justify-between w-full max-w-[520px] mx-auto mt-2 mb-12">
+      <!-- Connecting line background -->
+      <div class="absolute top-[15px] left-[30px] right-[30px] h-[2px] bg-[#1a1a22] -z-10 flex">
+        <div class="w-1/3 h-full bg-indigo-600"></div>
+      </div>
+      
+      <!-- Step 1 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Semester</span>
+      </div>
+      
+      <!-- Step 2 (Active) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center text-sm font-semibold shadow-md shadow-indigo-500/30">2</div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Branch</span>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">3</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Subjects</span>
+      </div>
+      
+      <!-- Step 4 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">4</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Confirm</span>
+      </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-white mb-2 tracking-tight">Select Your Branch</h2>
+      <p class="text-[17px] text-gray-400">Which branch are you studying?</p>
+    </div>
+
+    <!-- Branch Grid Options -->
+    <div class="grid grid-cols-3 gap-5" id="branch-grid">
+      
+      <!-- 1. AIML (Default Selected) -->
+      <div data-branch="AIML" data-branch-full="Artificial Intelligence & Machine Learning (AIML)" class="branch-card border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[16px] p-5 flex items-center gap-4 cursor-pointer relative transition-all shadow-lg shadow-indigo-500/10">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-indigo-500 flex items-center justify-center shrink-0 bg-[#060608]">
+          <div class="radio-dot w-2.5 h-2.5 rounded-full bg-indigo-500"></div>
+        </div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-indigo-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+            <path d="M9 16V8l2.5 6L14 8v8"></path>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Artificial Intelligence<br>& Machine Learning<br>(AIML)</span>
+      </div>
+
+      <!-- 2. CSE -->
+      <div data-branch="CSE" data-branch-full="Computer Science & Engineering (CSE)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="4" width="18" height="12" rx="2" ry="2"></rect>
+            <path d="M2 20h20"></path>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Computer Science<br>& Engineering<br>(CSE)</span>
+      </div>
+
+      <!-- 3. ECE -->
+      <div data-branch="ECE" data-branch-full="Electronics & Communication Engineering (ECE)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+            <rect x="9" y="9" width="6" height="6"></rect>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Electronics &<br>Communication<br>Engineering (ECE)</span>
+      </div>
+
+      <!-- 4. EEE -->
+      <div data-branch="EEE" data-branch-full="Electrical & Electronics Engineering (EEE)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Electrical &<br>Electronics<br>Engineering (EEE)</span>
+      </div>
+
+      <!-- 5. ISE -->
+      <div data-branch="ISE" data-branch-full="Information Science & Engineering (ISE)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Information Science<br>& Engineering (ISE)</span>
+      </div>
+
+      <!-- 6. ME -->
+      <div data-branch="ME" data-branch-full="Mechanical Engineering (ME)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="10.5" cy="10.5" r="2.5"></circle>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Mechanical<br>Engineering<br>(ME)</span>
+      </div>
+
+      <!-- 7. CIVIL -->
+      <div data-branch="CIVIL" data-branch-full="Civil Engineering (CIVIL)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M22 20L2 20"></path>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Civil Engineering<br>(CIVIL)</span>
+      </div>
+
+      <!-- 8. BT -->
+      <div data-branch="BT" data-branch-full="Biotechnology (BT)" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="2"></circle>
+          </svg>
+        </div>
+        <span class="text-[14.5px] text-white font-medium leading-snug">Biotechnology<br>(BT)</span>
+      </div>
+
+      <!-- 9. Other -->
+      <div data-branch="Other" data-branch-full="Other Engineering Branch" class="branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0"></div>
+        <div class="w-10 h-10 flex items-center justify-center shrink-0 text-gray-400">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="12" r="2.5"></circle>
+            <circle cx="12" cy="12" r="2.5"></circle>
+            <circle cx="19" cy="12" r="2.5"></circle>
+          </svg>
+        </div>
+        <span class="text-[15px] text-white font-medium">Other</span>
+      </div>
+
+    </div>
+
+    <!-- Continue Button -->
+    <div class="mt-12 flex justify-end">
+      <a href="/subject.html" id="btn-branch-continue" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold text-[15px] px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all w-fit no-underline">
+        <span>Continue</span>
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let currentBranch = localStorage.getItem('vtu_selected_branch') || 'AIML';
+    
+    function updateBranchUI(branchCode) {
+      document.querySelectorAll('.branch-card').forEach(card => {
+        const code = card.getAttribute('data-branch');
+        const radio = card.querySelector('.radio-circle');
+        const iconDiv = card.querySelector('div:nth-of-type(2)');
+        if (code === branchCode) {
+          card.className = "branch-card border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[16px] p-5 flex items-center gap-4 cursor-pointer relative transition-all shadow-lg shadow-indigo-500/10";
+          if (radio) {
+            radio.className = "radio-circle w-[22px] h-[22px] rounded-full border-2 border-indigo-500 flex items-center justify-center shrink-0 bg-[#060608]";
+            radio.innerHTML = `<div class="radio-dot w-2.5 h-2.5 rounded-full bg-indigo-500"></div>`;
+          }
+          if (iconDiv) iconDiv.className = "w-10 h-10 flex items-center justify-center shrink-0 text-indigo-400";
+        } else {
+          card.className = "branch-card border border-[#1a1a22] bg-[#060608] rounded-[16px] p-5 flex items-center gap-4 cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all";
+          if (radio) {
+            radio.className = "radio-circle w-[22px] h-[22px] rounded-full border-2 border-gray-600 shrink-0";
+            radio.innerHTML = "";
+          }
+          if (iconDiv) iconDiv.className = "w-10 h-10 flex items-center justify-center shrink-0 text-gray-400";
+        }
+      });
+    }
+
+    updateBranchUI(currentBranch);
+
+    document.querySelectorAll('.branch-card').forEach(card => {
+      card.addEventListener('click', () => {
+        currentBranch = card.getAttribute('data-branch');
+        const fullBranch = card.getAttribute('data-branch-full');
+        localStorage.setItem('vtu_selected_branch', currentBranch);
+        localStorage.setItem('vtu_selected_branch_full', fullBranch);
+        updateBranchUI(currentBranch);
+      });
+    });
+  });
+</script>
+{% endblock %}

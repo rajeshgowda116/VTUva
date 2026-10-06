@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - Select Subjects (Step 3 of 4){% endblock %}
+
+{% block nav_sem %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-8 py-8 overflow-y-auto z-10 bg-[#060608]">
+  <!-- Dark Setup Card -->
+  <div
+    class="max-w-[1000px] mx-auto bg-[#0d0d10] rounded-[24px] shadow-2xl border border-[#1a1a22] p-8 pt-6 relative min-h-[550px] flex flex-col text-gray-100">
+
+    <!-- Back Button -->
+    <a href="/branch.html"
+      class="flex items-center gap-2 text-indigo-400 font-medium text-[15px] hover:text-indigo-300 transition-colors w-fit absolute top-8 left-8 z-10 no-underline">
+      <span class="material-symbols-outlined text-lg">arrow_back</span>
+      Back
+    </a>
+
+    <!-- Stepper Progress -->
+    <div class="relative flex justify-between w-full max-w-[520px] mx-auto mt-2 mb-10">
+      <!-- Connecting line background -->
+      <div class="absolute top-[15px] left-[30px] right-[30px] h-[2px] bg-[#1a1a22] -z-10 flex">
+        <div class="w-[66.66%] h-full bg-indigo-600"></div>
+      </div>
+
+      <!-- Step 1 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Semester</span>
+      </div>
+
+      <!-- Step 2 (Completed) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px] font-bold">check</span>
+        </div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Branch</span>
+      </div>
+
+      <!-- Step 3 (Active) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div
+          class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center text-sm font-semibold shadow-md shadow-indigo-500/30">
+          3</div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Subjects</span>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div
+          class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">
+          4</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Confirm</span>
+      </div>
+    </div>
+
+    <!-- Header and Search -->
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h2 class="text-[32px] font-bold text-white mb-1.5 tracking-tight">Select Your Subjects</h2>
+        <p class="text-[16px] text-gray-400">Choose the subjects you want notes for<br>(You can select multiple
+          subjects)</p>
+      </div>
+
+      <!-- Subject Specific Search Bar -->
+      <div class="relative w-[280px] mt-2">
+        <span
+          class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xl">search</span>
+        <input type="text" id="subject-search-input" placeholder="Search subjects..."
+          class="w-full bg-[#060608] text-[14px] text-gray-200 rounded-xl pl-11 pr-4 py-2.5 border border-[#1a1a22] focus:outline-none focus:border-[#3b3b4f] transition-all placeholder-gray-500">
+      </div>
+    </div>
+
+    <!-- Subjects Grid -->
+    <div class="grid grid-cols-2 gap-4" id="subjects-grid">
+
+      <!-- 1. BCS501 -->
+      <div data-code="BCS501" data-name="Software Engineering and Project Management"
+        class="subject-card border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer transition-all shadow-lg shadow-indigo-500/10">
+        <div class="flex items-center gap-4">
+          <div
+            class="check-box w-[22px] h-[22px] bg-indigo-600 rounded-[6px] flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-white text-[16px] font-bold">check</span>
+          </div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS501</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Software Engineering &<br>Project Management</div>
+          </div>
+        </div>
+        <div
+          class="w-11 h-11 rounded-[10px] bg-indigo-900/50 text-indigo-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">description</span>
+        </div>
+      </div>
+
+      <!-- 2. BCS502 -->
+      <div data-code="BCS502" data-name="Computer Networks"
+        class="subject-card border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer transition-all shadow-lg shadow-indigo-500/10">
+        <div class="flex items-center gap-4">
+          <div
+            class="check-box w-[22px] h-[22px] bg-indigo-600 rounded-[6px] flex items-center justify-center shrink-0">
+            <span class="material-symbols-outlined text-white text-[16px] font-bold">check</span>
+          </div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS502</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Computer Networks</div>
+          </div>
+        </div>
+        <div
+          class="w-11 h-11 rounded-[10px] bg-emerald-900/40 text-emerald-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">hub</span>
+        </div>
+      </div>
+
+      <!-- 3. BCS503 -->
+      <div data-code="BCS503" data-name="Theory of Computation"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS503</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Theory of Computation</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-red-950/40 text-red-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">settings</span>
+        </div>
+      </div>
+
+      <!-- 4. BAIL504 -->
+      <div data-code="BAIL504" data-name="Data Visualization Lab"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BAIL504</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Data Visualization Lab</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-blue-950/40 text-blue-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">insights</span>
+        </div>
+      </div>
+
+      <!-- 5. BAI515A -->
+      <div data-code="BAI515A" data-name="Computer Vision"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BAI515A</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Computer Vision</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-purple-950/50 text-purple-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">visibility</span>
+        </div>
+      </div>
+
+      <!-- 6. BAI515B -->
+      <div data-code="BAI515B" data-name="Information Retrieval"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BAI515B</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Information Retrieval</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-rose-950/40 text-rose-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">manage_search</span>
+        </div>
+      </div>
+
+      <!-- 7. BCS515C -->
+      <div data-code="BCS515C" data-name="Unix System Programming"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS515C</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Unix System Programming</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-amber-950/40 text-amber-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">terminal</span>
+        </div>
+      </div>
+
+      <!-- 8. BCS515D -->
+      <div data-code="BCS515D" data-name="Distributed Systems"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS515D</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Distributed Systems</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-teal-950/40 text-teal-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">lan</span>
+        </div>
+      </div>
+
+      <!-- 9. BAI515E -->
+      <div data-code="BAI515E" data-name="Exploratory Data Analysis"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BAI515E</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Exploratory Data Analysis</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-violet-950/40 text-violet-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">analytics</span>
+        </div>
+      </div>
+
+      <!-- 10. BCS508 -->
+      <div data-code="BCS508" data-name="Environmental Studies and E-Waste Management"
+        class="subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+        <div class="flex items-center gap-4">
+          <div class="check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0"></div>
+          <div>
+            <div class="font-bold text-white text-[15px]">BCS508</div>
+            <div class="text-[13.5px] text-gray-300 leading-snug mt-0.5">Environmental Studies &<br>E-Waste Management</div>
+          </div>
+        </div>
+        <div class="w-11 h-11 rounded-[10px] bg-emerald-950/40 text-emerald-400 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined filled">eco</span>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- Footer Buttons -->
+    <div class="mt-8 flex justify-between items-center">
+      <a href="/branch.html"
+        class="bg-[#14141a] border border-[#1a1a22] text-indigo-400 hover:text-indigo-300 font-medium text-[15px] px-8 py-3 rounded-xl flex items-center gap-2 transition-colors no-underline">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+        Previous
+      </a>
+      <a href="/confirm.html" id="btn-subject-continue"
+        class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold text-[15px] px-10 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all no-underline">
+        <span>Continue</span>
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const defaultSelected = [
+      { code: 'BCS501', name: 'Software Engineering and Project Management' },
+      { code: 'BCS502', name: 'Database Management Systems' },
+      { code: 'BCS504', name: 'Computer Networks' }
+    ];
+
+    let selectedSubjects = JSON.parse(localStorage.getItem('vtu_selected_subjects')) || defaultSelected;
+
+    function renderSubjectState() {
+      const selectedCodes = selectedSubjects.map(s => s.code);
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const code = card.getAttribute('data-code');
+        const box = card.querySelector('.check-box');
+        if (selectedCodes.includes(code)) {
+          card.className = "subject-card border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer transition-all shadow-lg shadow-indigo-500/10";
+          if (box) {
+            box.className = "check-box w-[22px] h-[22px] bg-indigo-600 rounded-[6px] flex items-center justify-center shrink-0";
+            box.innerHTML = `<span class="material-symbols-outlined text-white text-[16px] font-bold">check</span>`;
+          }
+        } else {
+          card.className = "subject-card border border-[#1a1a22] bg-[#060608] rounded-[14px] px-5 py-4 flex items-center justify-between cursor-pointer hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all";
+          if (box) {
+            box.className = "check-box w-[22px] h-[22px] border-2 border-gray-600 rounded-[6px] shrink-0";
+            box.innerHTML = "";
+          }
+        }
+      });
+    }
+
+    renderSubjectState();
+
+    document.querySelectorAll('.subject-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const code = card.getAttribute('data-code');
+        const name = card.getAttribute('data-name');
+        const index = selectedSubjects.findIndex(s => s.code === code);
+        if (index > -1) {
+          if (selectedSubjects.length > 1) {
+            selectedSubjects.splice(index, 1);
+          } else {
+            alert('Please select at least one subject!');
+            return;
+          }
+        } else {
+          selectedSubjects.push({ code, name });
+        }
+        localStorage.setItem('vtu_selected_subjects', JSON.stringify(selectedSubjects));
+        renderSubjectState();
+      });
+    });
+
+    // Subject Filter Search
+    const searchInput = document.getElementById('subject-search-input');
+    searchInput?.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.subject-card').forEach(card => {
+        const code = card.getAttribute('data-code').toLowerCase();
+        const name = card.getAttribute('data-name').toLowerCase();
+        if (code.includes(term) || name.includes(term)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

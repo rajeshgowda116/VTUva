@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - Study Hub & Onboarding{% endblock %}
+
+{% block nav_notes %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-10 py-10 overflow-y-auto z-10 flex flex-col items-center">
+  <!-- Page Headers -->
+  <div class="w-full max-w-4xl text-center mb-8">
+    <h2 class="text-4xl font-extrabold text-white mb-2 tracking-tight">Notes & Study Hub</h2>
+    <p class="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
+      Access syllabus-wise notes, PYQs, quizzes and customized study material for your subjects.
+    </p>
+  </div>
+
+  <!-- Dynamic Profile Setup Container -->
+  <div class="flex flex-col items-center justify-center mt-2 w-full max-w-2xl bg-[#0d0d10] border border-[#1a1a22] rounded-3xl p-8 shadow-2xl" id="notes-main-card">
+    
+    <!-- Illustration -->
+    <div class="relative w-[400px] h-[200px] flex items-center justify-center mb-6">
+      <svg class="absolute inset-0 w-full h-full -z-10" viewBox="0 0 500 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M150 50 C250 20, 350 40, 420 100 C480 150, 460 220, 380 260 C280 300, 150 280, 80 220 C20 160, 50 80, 150 50 Z" fill="#1e1b4b" opacity="0.6"/>
+        <path d="M130 90 L135 105 L150 110 L135 115 L130 130 L125 115 L110 110 L125 105 Z" fill="#818cf8"/>
+        <path d="M380 150 L383 160 L393 163 L383 166 L380 176 L377 166 L367 163 L377 160 Z" fill="#818cf8"/>
+      </svg>
+
+      <!-- Stacked Books Vector -->
+      <svg width="220" height="160" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="translate-y-2">
+        <path d="M20 120 L120 155 L220 120 L120 85 Z" fill="#4f46e5"/>
+        <path d="M20 120 L20 145 L120 180 L220 145 L220 120 L120 155 Z" fill="#3730a3"/>
+        <path d="M135 150 L145 153 L145 185 L140 175 L135 185 Z" fill="#facc15"/>
+        <path d="M30 105 L120 135 L210 105 L120 75 Z" fill="#ef4444"/>
+        <path d="M30 105 L30 115 L120 145 L210 115 L210 105 L120 135 Z" fill="#b91c1c"/>
+        <path d="M40 85 L120 110 L200 85 L120 55 Z" fill="#38bdf8"/>
+        <path d="M40 85 L40 105 L120 130 L200 105 L200 85 L120 110 Z" fill="#0284c7"/>
+      </svg>
+    </div>
+
+    <!-- Active Profile Content -->
+    <div id="active-profile-section" class="w-full text-center flex flex-col items-center">
+      <div class="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-500/40 text-indigo-300 font-medium text-sm px-4 py-1.5 rounded-full mb-3 shadow-sm">
+        <span class="material-symbols-outlined text-indigo-400 text-lg">check_circle</span>
+        <span>Semester Setup Already Added</span>
+      </div>
+      <h3 class="text-2xl font-bold text-white mb-2 leading-snug tracking-tight" id="notes-profile-title">
+        5th Semester • AIML Branch
+      </h3>
+      <p class="text-gray-400 text-sm mb-6" id="notes-profile-sub">
+        You have 3 subjects configured in your academic profile.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-4">
+        <a href="/allsubject.html" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold text-sm px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all no-underline">
+          <span class="material-symbols-outlined text-lg">library_books</span>
+          <span>View My Notes & Subjects</span>
+        </a>
+        <a href="/sem.html" class="bg-[#14141a] border border-indigo-500/50 hover:bg-indigo-950/40 text-indigo-400 font-semibold text-sm px-6 py-3 rounded-xl flex items-center gap-2 transition-all no-underline">
+          <span class="material-symbols-outlined text-lg">add_circle</span>
+          <span>+ Add New Semester</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    let semVal = localStorage.getItem('vtu_selected_sem') || '5th Semester';
+    let branchCode = localStorage.getItem('vtu_selected_branch') || 'AIML';
+    let subjects = JSON.parse(localStorage.getItem('vtu_selected_subjects')) || [];
+
+    try {
+      const res = await fetch('/api/user/profile', { headers: { 'X-User-ID': '1' } });
+      if (res.ok) {
+        const profile = await res.json();
+        if (profile && profile.semester) {
+          semVal = profile.semester;
+          branchCode = profile.branch;
+          subjects = profile.subjects || subjects;
+        }
+      }
+    } catch (e) {}
+
+    const titleEl = document.getElementById('notes-profile-title');
+    const subEl = document.getElementById('notes-profile-sub');
+    if (titleEl) titleEl.textContent = `${semVal} • ${branchCode} Branch`;
+    if (subEl) subEl.textContent = `You have ${subjects.length || 3} subjects configured in your academic profile.`;
+  });
+</script>
+{% endblock %}

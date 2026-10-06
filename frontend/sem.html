@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - Select Semester (Step 1 of 4){% endblock %}
+
+{% block nav_sem %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-8 py-8 overflow-y-auto z-10 bg-[#060608]">
+  <!-- Dark Setup Card -->
+  <div class="max-w-[1000px] mx-auto bg-[#0d0d10] rounded-[24px] shadow-2xl border border-[#1a1a22] p-8 pt-6 relative min-h-[550px] flex flex-col text-gray-100">
+    
+    <!-- Back Button -->
+    <a href="/notes.html" class="flex items-center gap-2 text-indigo-400 font-medium text-[15px] hover:text-indigo-300 transition-colors w-fit absolute top-8 left-8 z-10 no-underline">
+      <span class="material-symbols-outlined text-lg">arrow_back</span>
+      Back
+    </a>
+
+    <!-- Stepper Progress -->
+    <div class="relative flex justify-between w-full max-w-[520px] mx-auto mt-2 mb-14">
+      <!-- Connecting line background -->
+      <div class="absolute top-[15px] left-[30px] right-[30px] h-[2px] bg-[#1a1a22] -z-10">
+        <div class="w-12 h-full bg-indigo-600"></div>
+      </div>
+      
+      <!-- Step 1 (Active) -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-center text-sm font-semibold shadow-md shadow-indigo-500/30">1</div>
+        <span class="text-indigo-400 font-medium text-[15px] mt-2">Semester</span>
+      </div>
+      
+      <!-- Step 2 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">2</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Branch</span>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">3</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Subjects</span>
+      </div>
+      
+      <!-- Step 4 -->
+      <div class="flex flex-col items-center bg-[#0d0d10] px-2">
+        <div class="w-8 h-8 rounded-full bg-[#14141a] border border-[#1a1a22] text-gray-400 flex items-center justify-center text-sm font-semibold">4</div>
+        <span class="text-gray-400 font-medium text-[15px] mt-2">Confirm</span>
+      </div>
+    </div>
+
+    <!-- Active Saved Semester Indicator Banner -->
+    <div id="saved-sem-banner" class="bg-indigo-950/40 border border-indigo-500/40 rounded-[16px] p-4 mb-6 flex items-center justify-between shadow-lg">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-indigo-400 text-[24px]">verified</span>
+        <div>
+          <div class="text-[14.5px] font-bold text-white">Currently Saved Semester: <span id="current-saved-sem-text" class="text-indigo-400">5th Semester</span></div>
+          <div class="text-[12.5px] text-gray-400">Select any semester below to switch or add a new semester setup.</div>
+        </div>
+      </div>
+      <span class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">ACTIVE PROFILE</span>
+    </div>
+
+    <!-- Section Header -->
+    <div class="mb-6">
+      <h2 class="text-3xl font-bold text-white mb-2 tracking-tight">Select Your Semester</h2>
+      <p class="text-[16px] text-gray-400">Select your current semester to view notes or add a new semester setup.</p>
+    </div>
+
+    <!-- Semester Grid -->
+    <div class="grid grid-cols-4 gap-5" id="sem-grid">
+      <button data-sem="1st Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">1st</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="2nd Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">2nd</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="3rd Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">3rd</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="4th Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">4th</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <!-- 5th Semester (Default Active) -->
+      <button data-sem="5th Semester" class="sem-card selected border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[16px] py-8 flex flex-col items-center justify-center relative transition-all shadow-lg shadow-indigo-500/10">
+        <div class="check-badge absolute top-4 right-4 w-[22px] h-[22px] bg-indigo-600 rounded-full flex items-center justify-center shadow-sm">
+          <span class="material-symbols-outlined text-white text-[14px] font-bold">check</span>
+        </div>
+        <span class="text-[26px] font-bold text-indigo-400">5th</span>
+        <span class="text-[15px] text-indigo-300 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="6th Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">6th</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="7th Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">7th</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+
+      <button data-sem="8th Semester" class="sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative">
+        <span class="text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors">8th</span>
+        <span class="text-[15px] text-gray-400 mt-1 font-medium">Semester</span>
+      </button>
+    </div>
+
+    <!-- Continue Button -->
+    <div class="mt-auto pt-10 flex justify-end">
+      <a href="/branch.html" id="btn-sem-continue" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold text-[15px] px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/25 transition-all w-fit no-underline">
+        <span>Continue</span>
+        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    let currentSelected = localStorage.getItem('vtu_selected_sem') || '5th Semester';
+    const savedSemText = document.getElementById('current-saved-sem-text');
+    if (savedSemText) savedSemText.textContent = currentSelected;
+
+    // Check SQL user profile
+    try {
+      const res = await fetch('/api/user/profile', { headers: { 'X-User-ID': '1' } });
+      if (res.ok) {
+        const profile = await res.json();
+        if (profile && profile.semester) {
+          currentSelected = profile.semester;
+          localStorage.setItem('vtu_selected_sem', currentSelected);
+          if (savedSemText) savedSemText.textContent = currentSelected;
+        }
+      }
+    } catch (e) {}
+    
+    function updateSemUI(semValue) {
+      document.querySelectorAll('.sem-card').forEach(card => {
+        const value = card.getAttribute('data-sem');
+        if (value === semValue) {
+          card.className = "sem-card selected border-[1.5px] border-indigo-500 bg-indigo-950/40 rounded-[16px] py-8 flex flex-col items-center justify-center relative transition-all shadow-lg shadow-indigo-500/10";
+          if (!card.querySelector('.check-badge')) {
+            const badge = document.createElement('div');
+            badge.className = "check-badge absolute top-4 right-4 w-[22px] h-[22px] bg-indigo-600 rounded-full flex items-center justify-center shadow-sm";
+            badge.innerHTML = `<span class="material-symbols-outlined text-white text-[14px] font-bold">check</span>`;
+            card.appendChild(badge);
+          }
+          const numSpan = card.querySelector('span:first-of-type');
+          if (numSpan) numSpan.className = "text-[26px] font-bold text-indigo-400";
+          const lblSpan = card.querySelector('span:last-of-type');
+          if (lblSpan) lblSpan.className = "text-[15px] text-indigo-300 mt-1 font-medium";
+        } else {
+          card.className = "sem-card border border-[#1a1a22] rounded-[16px] py-8 flex flex-col items-center justify-center hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all bg-[#060608] group relative";
+          const badge = card.querySelector('.check-badge');
+          if (badge) badge.remove();
+          const numSpan = card.querySelector('span:first-of-type');
+          if (numSpan) numSpan.className = "text-[26px] font-bold text-white group-hover:text-indigo-400 transition-colors";
+          const lblSpan = card.querySelector('span:last-of-type');
+          if (lblSpan) lblSpan.className = "text-[15px] text-gray-400 mt-1 font-medium";
+        }
+      });
+    }
+
+    updateSemUI(currentSelected);
+
+    document.querySelectorAll('.sem-card').forEach(card => {
+      card.addEventListener('click', () => {
+        currentSelected = card.getAttribute('data-sem');
+        localStorage.setItem('vtu_selected_sem', currentSelected);
+        updateSemUI(currentSelected);
+      });
+    });
+  });
+</script>
+{% endblock %}

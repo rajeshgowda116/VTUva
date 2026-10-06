@@ -75,6 +75,9 @@ CASUAL_RESPONSES = {
     "NEED_HELP": "Of course! 😊 Send me the topic or question you're working on.",
     "CAN_YOU_HELP": "Absolutely! 📚 Ask your VTU question and I'll help you understand it.",
 
+    # Out of Scope / Non-VTU
+    "OUT_OF_SCOPE": "I'm focused on VTU academic topics. Ask me about your syllabus, subjects, notes, previous-year questions, or exam preparation. 📚",
+
     # Default
     "DEFAULT": "I'm here to help! 😊 Ask me a question about your VTU studies."
 }
@@ -121,7 +124,7 @@ def enhance_pyq_search_query(question: str) -> str:
     return q_clean
 
 
-def ask_question(question: str, history=None) -> Dict[str, Any]:
+def ask_question(question: str, history=None, subject: str = "General") -> Dict[str, Any]:
     t_start = time.perf_counter()
 
     if not question or not question.strip():
@@ -159,7 +162,7 @@ def ask_question(question: str, history=None) -> Dict[str, Any]:
 
     t_llm_start = time.perf_counter()
     context = "\n\n".join(doc.page_content for doc in docs)
-    answer = generate_answer(standalone_question, context)
+    answer = generate_answer(standalone_question, context, subject=subject)
     t_llm = time.perf_counter() - t_llm_start
 
     t_total = time.perf_counter() - t_start

@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}VTUva - My Notes & Subjects{% endblock %}
+
+{% block nav_subjects %}active{% endblock %}
+
+{% block content %}
+<div class="flex-1 px-10 py-8 overflow-y-auto z-10 text-gray-100 bg-[#060608] min-h-full">
+  <!-- Header Section -->
+  <div class="mb-6">
+    <h2 class="text-[36px] font-bold text-white mb-2 tracking-tight">My Notes</h2>
+    <p class="text-[16px] text-gray-400 max-w-2xl">
+      Access syllabus-wise notes, PYQs, quizzes and study material<br>for your selected subjects.
+    </p>
+  </div>
+
+  <!-- Academic Info Banner -->
+  <div class="bg-[#0d0d10] rounded-[16px] p-5 flex items-center justify-between mb-8 border border-[#1a1a22] shadow-xl">
+    <div class="flex items-center h-full">
+      <!-- Semester -->
+      <div class="flex items-center gap-4 px-4">
+        <div class="text-indigo-400">
+          <span class="material-symbols-outlined filled text-[32px]">school</span>
+        </div>
+        <div>
+          <div class="text-[13px] text-gray-400 mb-0.5">Semester</div>
+          <div class="text-[16px] font-bold text-white" id="hub-sem">5th Semester</div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="w-[1.5px] h-10 bg-[#1a1a22] mx-4"></div>
+
+      <!-- Branch -->
+      <div class="flex items-center gap-4 px-4">
+        <div class="text-indigo-400">
+          <span class="material-symbols-outlined filled text-[32px]">account_tree</span>
+        </div>
+        <div>
+          <div class="text-[13px] text-gray-400 mb-0.5">Branch</div>
+          <div class="text-[16px] font-bold text-white" id="hub-branch">AIML</div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="w-[1.5px] h-10 bg-[#1a1a22] mx-4"></div>
+
+      <!-- Subjects Selected -->
+      <div class="flex items-center gap-4 px-4">
+        <div class="text-indigo-400">
+          <span class="material-symbols-outlined filled text-[32px]">library_books</span>
+        </div>
+        <div>
+          <div class="text-[13px] text-gray-400 mb-0.5">Subjects Selected</div>
+          <div class="text-[16px] font-bold text-white" id="hub-count">3 Subjects</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex items-center gap-3">
+      <a href="/sem.html?action=add_new" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-medium text-[14px] px-5 py-2.5 rounded-xl shadow-md transition-all no-underline">
+        <span class="material-symbols-outlined text-[18px]">add_circle</span>
+        + Add New Semester
+      </a>
+      <a href="/sem.html?action=edit" class="flex items-center gap-2 bg-[#14141a] border border-[#1a1a22] text-gray-300 hover:text-white font-medium text-[14px] px-4 py-2.5 rounded-xl transition-colors shadow-sm no-underline">
+        <span class="material-symbols-outlined text-[18px]">edit</span>
+        Edit Selection
+      </a>
+    </div>
+  </div>
+
+  <!-- "Your Subjects" Title & Toggles -->
+  <div class="flex items-center justify-between mb-5">
+    <h3 class="text-[24px] font-bold text-white">Your Subjects</h3>
+    <div class="flex items-center border border-[#1a1a22] rounded-[10px] p-1 bg-[#0d0d10]">
+      <button id="btn-view-grid" class="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-lg text-[14px] font-medium shadow-sm">
+        <span class="material-symbols-outlined text-[18px]">grid_view</span>
+        Grid View
+      </button>
+      <button id="btn-view-list" class="flex items-center gap-2 text-gray-400 hover:text-white px-4 py-1.5 rounded-lg text-[14px] font-medium transition-colors">
+        <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+        List View
+      </button>
+    </div>
+  </div>
+
+  <!-- Subject Cards Container -->
+  <div class="grid grid-cols-3 gap-6 mb-8" id="subjects-container">
+    <!-- Dynamically Populated Cards -->
+  </div>
+
+  <!-- Bottom Action Banner -->
+  <div class="bg-[#0d0d10] rounded-[20px] p-6 flex items-center justify-between border border-[#1a1a22]">
+    <div class="flex items-center gap-6">
+      <div class="w-14 h-14 flex items-center justify-center">
+        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+          <path d="M10 40 L30 48 L50 40 L30 32 Z" fill="#60a5fa"/>
+          <path d="M10 40 L10 45 L30 53 L50 45 L50 40 L30 48 Z" fill="#3b82f6"/>
+          <path d="M10 32 L30 40 L50 32 L30 24 Z" fill="#93c5fd"/>
+        </svg>
+      </div>
+      <div>
+        <h4 class="text-[16px] font-bold text-white mb-0.5">Need to add more subjects?</h4>
+        <p class="text-[14px] text-gray-400">You can change your semester, branch or subjects anytime.</p>
+      </div>
+    </div>
+    
+    <a href="/sem.html" class="flex items-center gap-2 bg-[#14141a] border border-indigo-500/50 text-indigo-400 hover:bg-indigo-950/40 font-medium text-[14px] px-6 py-2.5 rounded-xl transition-colors shadow-sm no-underline">
+      <span class="material-symbols-outlined text-[18px]">edit</span>
+      Edit Selection
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    let semVal = localStorage.getItem('vtu_selected_sem') || '5th Semester';
+    let branchCode = localStorage.getItem('vtu_selected_branch') || 'AIML';
+    let subjects = JSON.parse(localStorage.getItem('vtu_selected_subjects')) || [
+      { code: 'BCS501', name: 'Software Engineering and Project Management' },
+      { code: 'BCS502', name: 'Database Management Systems' },
+      { code: 'BCS504', name: 'Computer Networks' }
+    ];
+
+    // Fetch latest stored profile from SQL Database
+    try {
+      const res = await fetch('/api/user/profile', {
+        headers: { 'X-User-ID': '1' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.semester) {
+          semVal = data.semester;
+          branchCode = data.branch;
+          subjects = data.subjects || subjects;
+          localStorage.setItem('vtu_selected_sem', semVal);
+          localStorage.setItem('vtu_selected_branch', branchCode);
+          localStorage.setItem('vtu_selected_subjects', JSON.stringify(subjects));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch profile from SQL DB, using cached values:', err);
+    }
+
+    const container = document.getElementById('subjects-container');
+    const colorBadges = [
+      { bg: 'rgba(239, 68, 68, 0.15)', text: '#f87171', icon: 'settings' },
+      { bg: 'rgba(16, 185, 129, 0.15)', text: '#34d399', icon: 'database' },
+      { bg: 'rgba(168, 85, 247, 0.15)', text: '#c084fc', icon: 'account_tree' },
+      { bg: 'rgba(244, 63, 94, 0.15)', text: '#fb7185', icon: 'smart_toy' },
+      { bg: 'rgba(245, 158, 11, 0.15)', text: '#fbbf24', icon: 'trending_up' }
+    ];
+
+    function renderSubjects() {
+      document.getElementById('hub-sem').textContent = semVal;
+      document.getElementById('hub-branch').textContent = branchCode;
+      document.getElementById('hub-count').textContent = `${subjects.length} Subjects`;
+
+      if (!subjects || subjects.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-3 p-12 text-center bg-[#0d0d10] border border-[#1a1a22] rounded-2xl text-gray-400">
+            <span class="material-symbols-outlined text-[48px] text-gray-600 mb-2">library_books</span>
+            <p class="text-base font-semibold text-white mb-1">No subjects found</p>
+            <p class="text-xs text-gray-500 mb-4">You have deleted all your selected subjects.</p>
+            <a href="/sem.html" class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium text-xs px-4 py-2 rounded-xl no-underline shadow-md">
+              <span class="material-symbols-outlined text-[16px]">add_circle</span> Add Subjects
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = subjects.map((s, idx) => {
+        const theme = colorBadges[idx % colorBadges.length];
+        return `
+          <div class="border border-[#1a1a22] bg-[#0d0d10] rounded-[20px] p-5 shadow-lg relative flex flex-col group hover:border-[#3b3b4f] hover:bg-[#14141a] transition-all">
+            <button onclick="event.stopPropagation(); deleteSubject('${s.code}')" class="absolute top-4 right-4 w-8 h-8 rounded-lg bg-[#14141a] border border-[#1a1a22] text-gray-400 hover:text-rose-400 hover:border-rose-500/50 hover:bg-rose-950/40 flex items-center justify-center transition-all z-10" title="Delete subject ${s.code}">
+              <span class="material-symbols-outlined text-[18px]">delete</span>
+            </button>
+            
+            <div class="w-12 h-12 rounded-[12px] flex items-center justify-center mb-4" style="background-color: ${theme.bg}; color: ${theme.text};">
+              <span class="material-symbols-outlined filled text-[24px]">${theme.icon}</span>
+            </div>
+            
+            <div class="font-bold text-[18px] text-white mb-1 pr-8">${s.code}</div>
+            <div class="text-[14px] text-gray-300 leading-snug mb-5 h-[42px]">${s.name}</div>
+            
+            <div class="flex items-center gap-5 mb-5 pb-5 border-b border-[#1a1a22]">
+              <div class="flex items-center gap-1.5 text-[13px] text-gray-400">
+                <span class="material-symbols-outlined text-[16px]">description</span>
+                5 Modules
+              </div>
+              <div class="flex items-center gap-1.5 text-[13px] text-gray-400">
+                <span class="material-symbols-outlined text-[16px]">schedule</span>
+                40 Topics
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 mt-auto">
+              <a href="/index.html?subject=${encodeURIComponent(s.code)}&action=imp_questions" class="flex items-center justify-center gap-2 bg-indigo-950/40 text-indigo-400 hover:bg-indigo-900/60 py-2.5 rounded-[10px] text-[13px] font-semibold transition-colors no-underline">
+                <span class="material-symbols-outlined filled text-[16px]">menu_book</span> Notes
+              </a>
+              <a href="/index.html?subject=${encodeURIComponent(s.code)}&action=pyqs" class="flex items-center justify-center gap-2 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/60 py-2.5 rounded-[10px] text-[13px] font-semibold transition-colors no-underline">
+                <span class="material-symbols-outlined filled text-[16px]">description</span> PYQs
+              </a>
+              <a href="/index.html?subject=${encodeURIComponent(s.code)}&action=quizzes" class="flex items-center justify-center gap-2 bg-purple-950/40 text-purple-400 hover:bg-purple-900/60 py-2.5 rounded-[10px] text-[13px] font-semibold transition-colors no-underline">
+                <span class="material-symbols-outlined filled text-[16px]">help</span> Quizzes
+              </a>
+              <a href="/index.html?subject=${encodeURIComponent(s.code)}&action=study_plan" class="flex items-center justify-center gap-2 bg-amber-950/40 text-amber-400 hover:bg-amber-900/60 py-2.5 rounded-[10px] text-[13px] font-semibold transition-colors no-underline">
+                <span class="material-symbols-outlined filled text-[16px]">calendar_month</span> Study Plan
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.deleteSubject = async function(code) {
+      if (!confirm(`Are you sure you want to delete ${code} from your subjects?`)) {
+        return;
+      }
+      subjects = subjects.filter(s => s.code !== code);
+      localStorage.setItem('vtu_selected_subjects', JSON.stringify(subjects));
+
+      try {
+        await fetch('/api/user/profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': '1'
+          },
+          body: JSON.stringify({
+            semester: semVal,
+            branch: branchCode,
+            subjects: subjects
+          })
+        });
+      } catch (err) {
+        console.warn('Could not update profile on server:', err);
+      }
+
+      renderSubjects();
+    };
+
+    renderSubjects();
+
+    // Grid vs List view toggle
+    const btnGrid = document.getElementById('btn-view-grid');
+    const btnList = document.getElementById('btn-view-list');
+    btnGrid?.addEventListener('click', () => {
+      container.className = "grid grid-cols-3 gap-6 mb-8";
+      btnGrid.className = "flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-lg text-[14px] font-medium shadow-sm";
+      btnList.className = "flex items-center gap-2 text-gray-400 hover:text-white px-4 py-1.5 rounded-lg text-[14px] font-medium transition-colors";
+    });
+    btnList?.addEventListener('click', () => {
+      container.className = "grid grid-cols-1 gap-4 mb-8";
+      btnList.className = "flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-1.5 rounded-lg text-[14px] font-medium shadow-sm";
+      btnGrid.className = "flex items-center gap-2 text-gray-400 hover:text-white px-4 py-1.5 rounded-lg text-[14px] font-medium transition-colors";
+    });
+  });
+</script>
+{% endblock %}
