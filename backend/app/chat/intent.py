@@ -50,14 +50,15 @@ def detect_intent(message: str) -> str:
     if text_clean in ok_set or norm_text in ok_set:
         return "CASUAL_OK"
 
-    # Out of Scope / Unrelated casual topics (cricket, movies, recipes, games, sports, etc.)
+    # Out of Scope / Unrelated casual topics (cricket, movies, recipes, jokes, sports, politics, etc.)
     out_of_scope_patterns = [
-        r"\b(recipe|recipes|cook|cooking|pizza|burger|pasta|restaurant|movie|movies|film|actor|actress|bollywood|hollywood|cricket|football|match|score|ipl|messi|ronaldo|game|gaming|song|music|singer|lyrics)\b",
-        r"\b(who won|capital of|weather in|price of|buy shoes|flight to)\b"
+        r"\b(recipe|recipes|cook|cooking|pizza|burger|pasta|restaurant|food|movie|movies|film|actor|actress|bollywood|hollywood|cricket|football|match|score|ipl|messi|ronaldo|game|gaming|song|music|singer|lyrics|joke|jokes|riddle|funny|story|weather|capital|ticket|flight|politics|election|currency|crypto|bitcoin)\b",
+        r"\b(who won|capital of|weather in|price of|buy shoes|flight to|how to make tea|tell a joke)\b"
     ]
     for pattern in out_of_scope_patterns:
         if re.search(pattern, text_clean):
             return "OUT_OF_SCOPE"
 
     return "UNKNOWN"
+
 

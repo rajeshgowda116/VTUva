@@ -99,8 +99,20 @@ def process_and_summarize_pyqs():
                 "page": 1,
                 "source": rel_path
             })
-        except Exception as e:
-            print(f"[Warning] Error parsing PYQ {pdf_path.name}: {e}")
+        except Exception:
+            # Fallback to PyPDF text loading when Docling is not installed
+            try:
+                docs = list(lazy_load_pdf(pdf_path))
+                raw_txt = "\n\n".join(d.get("text", "") for d in docs)
+                rel_path = str(pdf_path.relative_to(ROOT_DIR)) if ROOT_DIR in pdf_path.parents else pdf_path.name
+                pyq_docs.append({
+                    "text": f"Question Paper ({pdf_path.name}):\n\n{raw_txt}",
+                    "page": 1,
+                    "source": rel_path
+                })
+            except Exception as load_err:
+                print(f"[Warning] Could not load {pdf_path.name}: {load_err}")
+
 
     if subject_questions:
         print("🧠 Running Semantic Similarity Analysis on prev_qustions...")
@@ -156,19 +168,24 @@ def process_and_summarize_pyqs():
 def ingest():
     processed = load_processed_files()
     
-    # 1. Standard Notes/Textbook Ingestion from data/
-    notes_files = list(DATA_PATH.rglob("*.pdf")) if DATA_PATH.exists() else []
-    print(f"Notes/Study PDF files found in data directory: {len(notes_files)}")
+    # 1. Standard Notes/Textbook & PYQ Ingestion from data/ and prev_qustions/
+    pdf_files = []
+    if DATA_PATH.exists():
+        pdf_files.extend(list(DATA_PATH.rglob("*.pdf")))
+    if PREV_QUESTIONS_PATH.exists():
+        pdf_files.extend(list(PREV_QUESTIONS_PATH.rglob("*.pdf")))
+    
+    pdf_files = list(set(pdf_files))
+    print(f"📄 Total PDF files (Notes + PYQs) found: {len(pdf_files)}")
 
-    for pdf_file in notes_files:
+    for pdf_file in pdf_files:
         file_hash = calculate_hash(pdf_file)
         file_key = str(pdf_file)
 
         if file_key in processed and processed[file_key] == file_hash:
-            print(f"[Skipping] Already ingested: {pdf_file.name}")
             continue
 
-        print(f"[Loading] Notes PDF: {pdf_file.name}")
+        print(f"[Loading PDF] {pdf_file.name}")
         try:
             documents = list(lazy_load_pdf(pdf_file))
             chunks = split_documents(documents)
@@ -177,11 +194,11 @@ def ingest():
                 add_documents(chunks)
                 processed[file_key] = file_hash
                 save_processed_files(processed)
-                print(f"[Stored] In ChromaDB: {pdf_file.name}")
+                print(f"[Stored in ChromaDB] {pdf_file.name}")
         except Exception as e:
             print(f"[Warning] Error loading {pdf_file.name}: {e}")
 
-    # 2. PYQ Ingestion strictly from prev_qustions/
+    # 2. PYQ Ingestion & Summary
     process_and_summarize_pyqs()
 
 if __name__ == "__main__":

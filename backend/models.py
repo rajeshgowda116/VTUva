@@ -98,6 +98,62 @@ class UserProfile(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    password_hash = Column(String(255), nullable=False)
+    salt = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False, default="VTU Student")
+    usn = Column(String(50), nullable=True, default="4DM24AI038")
+    semester = Column(String(100), nullable=False, default="5th Semester")
+    branch = Column(String(100), nullable=False, default="AIML")
+    token = Column(String(255), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PYQQuestionGroup(Base):
+    __tablename__ = "pyq_question_groups"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    subject_code = Column(String(50), nullable=False, index=True)
+    module = Column(Integer, nullable=False, index=True)
+    canonical_question = Column(Text, nullable=False)
+    repetition_count = Column(Integer, default=1, index=True)
+    years_asked = Column(String(255), nullable=False, default="")  # e.g., "2022, 2023, 2024, 2025"
+    importance_tier = Column(String(100), default="Standard Question", index=True)  # e.g. "Highly Repeated (4+ times)"
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    questions = relationship("PYQQuestion", back_populates="group")
+
+
+class PYQQuestion(Base):
+    __tablename__ = "pyq_questions"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    question_id = Column(String(100), nullable=False, unique=True, index=True)
+    subject_code = Column(String(50), nullable=False, index=True)
+    subject_name = Column(String(255), nullable=True)
+    year = Column(Integer, nullable=False, index=True)
+    session = Column(String(100), nullable=True)
+    module = Column(Integer, nullable=False, index=True)
+    main_question = Column(String(20), nullable=True)
+    sub_question = Column(String(20), nullable=True)
+    question_text = Column(Text, nullable=False)
+    marks = Column(Integer, nullable=True)
+    blooms_level = Column(String(20), nullable=True)
+    course_outcome = Column(String(20), nullable=True)
+    group_id = Column(Integer, ForeignKey("pyq_question_groups.id"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    group = relationship("PYQQuestionGroup", back_populates="questions")
+
+
 class VTUUpdate(Base):
     __tablename__ = "vtu_updates"
     __table_args__ = {'extend_existing': True}
@@ -111,6 +167,7 @@ class VTUUpdate(Base):
     icon_type = Column(String(50), default="file")
     link = Column(String(768), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 
 
 

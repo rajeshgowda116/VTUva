@@ -3,7 +3,10 @@ import os
 import json
 import logging
 from typing import List, Dict, Any, Optional
-from docling.document_converter import DocumentConverter
+try:
+    from docling.document_converter import DocumentConverter
+except ImportError:
+    DocumentConverter = None
 
 logger = logging.getLogger("pyq_processor")
 
@@ -20,9 +23,13 @@ class PYQProcessor:
         os.makedirs(self.output_dir, exist_ok=True)
         self.converter = None  # Lazy-initialize Docling only when needed
 
-    def _get_converter(self) -> DocumentConverter:
+    def _get_converter(self):
+        if DocumentConverter is None:
+            raise RuntimeError("docling is not installed in the python environment.")
         if self.converter is None:
             self.converter = DocumentConverter()
+        return self.converter
+
         return self.converter
 
     @staticmethod

@@ -89,18 +89,32 @@ def get_llm(model_override: str = None):
     return None
 
 
+VTUVA_SYSTEM_RULES = """
+============================================================
+ABSOLUTE KNOWLEDGE & STRICT GROUNDING RULES:
+1. The provided CONTEXT FROM VTU DOCUMENTS is your ONLY source of academic truth.
+2. Use ONLY information supported by the CONTEXT. Do NOT use general memory to fill missing details.
+3. Do NOT guess, assume, hallucinate, or invent information (definitions, formulas, algorithms, steps, diagrams, examples, applications, advantages, module names, subject codes, or PYQ frequencies).
+4. Answer the EXACT topic, subject code, and question requested. Do NOT change topics or swap subjects.
+5. If the context contains partial information, answer ONLY the supported part and explicitly state what is missing.
+6. If the context is missing or insufficient for the requested question/marks, explicitly state:
+   "I couldn't find enough information in the available VTU knowledge base to answer this accurately."
+============================================================
+"""
+
+
 def build_prompt(question: str, context: str, subject: str = "General") -> str:
     """
-    Subject-focused VTU RAG prompt builder with ChatGPT-style conversational directness
+    Subject-focused VTU RAG prompt builder with strict VTUva grounding rules
     and specialized answer modes (10-mark, 5-mark, notes, pyqs, comparisons, simple explanations).
     """
     q_lower = question.lower().strip()
     subj_code = subject.strip() if subject and subject.strip() and subject.strip() not in ("General", "All") else ""
 
     if subj_code:
-        full_instruction = f"Please provide only {subj_code.lower()} subject answers only if he asked 5 marks explain 5 marks he asked 10 marks answer 10 marks explain simple way: {question}"
+        full_instruction = f"Please provide only {subj_code.upper()} subject answers based strictly on VTU context: {question}"
     else:
-        full_instruction = f"Please provide only accurate VTU subject answers only if he asked 5 marks explain 5 marks he asked 10 marks answer 10 marks explain simple way: {question}"
+        full_instruction = f"Please provide accurate VTU subject answers based strictly on VTU context: {question}"
 
     is_list_questions_mode = bool(re.search(
         r"\b(imp\s+questions?|important\s+questions?|most\s+imp|give\s+imp|list\s+questions?|show\s+questions?|pyqs?|repeated\s+questions?|frequently\s+asked)\b",
@@ -110,16 +124,19 @@ def build_prompt(question: str, context: str, subject: str = "General") -> str:
         q_lower
     ))
 
+    is_pyq_mode = bool(re.search(r"\b(pyq|pyqs|previous\s+year|past\s+paper|question\s+paper|repetition\s+frequency)\b", q_lower)) and not is_list_questions_mode
     is_notes_mode = bool(re.search(r"\b(make\s+notes|create\s+notes|module\s*\d+\s*notes|syllabus\s+notes|notes\s+for)\b", q_lower))
     is_compare_mode = bool(re.search(r"\b(compare|difference\s+between|vs\.?|distinguish)\b", q_lower))
     is_5_marks = bool(re.search(r"\b(4\s*marks?|4\s*mark|5\s*marks?|5\s*mark|four\s*marks?|five\s*marks?)\b", q_lower))
     is_7_marks = bool(re.search(r"\b(6\s*marks?|6\s*mark|7\s*marks?|7\s*mark|six\s*marks?|seven\s*marks?)\b", q_lower))
     is_10_marks = bool(re.search(r"\b(8\s*marks?|8\s*mark|10\s*marks?|10\s*mark|eight\s*marks?|ten\s*marks?)\b", q_lower))
-    is_short_def = bool(re.search(r"\b(define|what\s+is\s+a|what\s+is|short\s+note|definition)\b", q_lower)) and not (is_5_marks or is_10_marks or is_notes_mode or is_list_questions_mode)
+    is_short_def = bool(re.search(r"\b(define|what\s+is\s+a|what\s+is|short\s+note|definition)\b", q_lower)) and not (is_5_marks or is_10_marks or is_notes_mode or is_list_questions_mode or is_pyq_mode)
+
 
     # 1. LIST IMPORTANT QUESTIONS MODE (QUESTIONS ONLY — NO DETAILED ANSWERS)
     if is_list_questions_mode:
         return f"""You are VTUva, an expert VTU Examination Assistant.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST: {question}
 SUBJECT CODE: {subj_code if subj_code else 'VTU Subject'}
@@ -143,6 +160,7 @@ CLEAN STRUCTURED QUESTION LIST (QUESTIONS ONLY — NO LONG ANSWERS):
     # 2. NOTES MODE
     if is_notes_mode:
         return f"""You are VTUva, an expert VTU Academic Assistant.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
@@ -152,11 +170,11 @@ STRICT CONSTRAINTS:
 2. Structure the notes cleanly as follows:
    # Module — [Topic / Subject]
    ## Important Concepts
-   - Bullet points of main concepts with bold terms.
+   - Bullet points of main concepts supported by context.
    ## Key Definitions
    - Clear definitions of core terms.
    ## Important Questions
-   - List of key exam questions for this module.
+   - List of key exam questions for this module supported by context.
    ## Quick Revision
    - 3-4 bullet summary points for rapid revision.
 
@@ -166,9 +184,10 @@ CONTEXT FROM VTU DOCUMENTS:
 MODULE NOTES:
 """
 
-    # 2. PYQ / REPEATED QUESTIONS MODE
+    # 3. PYQ / REPEATED QUESTIONS MODE
     if is_pyq_mode:
         return f"""You are VTUva, an expert VTU Previous Year Questions Evaluator.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
@@ -179,8 +198,7 @@ STRICT CONSTRAINTS:
    ## Frequently Asked Questions — {subj_code if subj_code else 'VTU Exam'}
    | Question | Weightage / Frequency | Key Focus Area |
    |---|---|---|
-3. Only display frequency/years if present or supported by VTU document evidence.
-4. Follow the table with 2-3 practical exam preparation tips.
+3. Only display frequency/years if present or supported by VTU document evidence. Do NOT invent frequencies.
 
 CONTEXT FROM VTU DOCUMENTS:
 {context}
@@ -188,9 +206,10 @@ CONTEXT FROM VTU DOCUMENTS:
 PYQ SUMMARY:
 """
 
-    # 3. COMPARISON MODE
+    # 4. COMPARISON MODE
     if is_compare_mode:
         return f"""You are VTUva, an expert VTU Academic Assistant.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
@@ -206,19 +225,20 @@ CONTEXT FROM VTU DOCUMENTS:
 COMPARISON TABLE ANSWER:
 """
 
-    # 4. 5-MARK EXAM MODE
+    # 5. 5-MARK EXAM MODE
     if is_5_marks:
         return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
 
 STRICT CONSTRAINTS & 5-MARK STRUCTURE:
 1. Start directly with the topic header: ## [Topic Title] (5-Mark Response)
-2. **Definition / Overview**: 2-3 clear, concise sentences in plain English.
-3. **5 Core Key Points**: 5 numbered points with **bold terms** explained simply.
-4. **Simple ASCII Diagram / Flowchart**: Clean block diagram if applicable.
-5. **Key Applications / Features**: Short bullet points.
+2. **Definition / Overview**: Clear, concise overview based strictly on context.
+3. **Core Key Points**: Numbered points with **bold terms** supported by context.
+4. **Simple ASCII Diagram / Flowchart**: Create ASCII diagram ONLY if context provides enough details.
+5. **Key Applications / Features**: Short bullet points supported by context.
 6. Conclude with: > *Note: This answer is structured for a 5-mark VTU-style response.*
 
 CONTEXT FROM VTU DOCUMENTS:
@@ -227,10 +247,11 @@ CONTEXT FROM VTU DOCUMENTS:
 5-MARK VTU EXAM ANSWER:
 """
 
-    # 5. 10-MARK EXAM MODE
+    # 6. 10-MARK EXAM MODE
     if is_7_marks or is_10_marks:
         marks_label = "7-MARK" if is_7_marks else "10-MARK"
         return f"""You are VTUva, an expert VTU Exam Assistant & Evaluator.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
@@ -238,13 +259,12 @@ USER REQUEST:
 STRICT CONSTRAINTS & {marks_label} STRUCTURE:
 1. Start directly with the topic header: ## [Topic Title] ({marks_label} Response)
 2. **Definition & Introduction**: Clear introductory section explaining the core concept.
-3. **Architecture / Structural Diagram**: Labeled ASCII diagram or flowchart breakdown.
+3. **Architecture / Structural Diagram**: ASCII diagram ONLY if context details permit.
 4. **Detailed Components & Working Principle**:
-   - Numbered/bulleted sections for all core components with **bold keywords**.
+   - Numbered/bulleted sections for all core components supported by context.
    - Step-by-step explanation of working procedure.
-5. **Practical Applications & Real-World Use**: Specific engineering applications.
-6. **Key Advantages & Limitations**: Bullet points or simple summary table.
-7. Conclude with: > *Note: This answer is structured for a {marks_label.lower()} VTU-style response.*
+5. **Practical Applications & Key Advantages**: Bullet points supported by context.
+6. Conclude with: > *Note: This answer is structured for a {marks_label.lower()} VTU-style response.*
 
 CONTEXT FROM VTU DOCUMENTS:
 {context}
@@ -252,17 +272,17 @@ CONTEXT FROM VTU DOCUMENTS:
 {marks_label} VTU EXAM ANSWER:
 """
 
-    # 6. SHORT DEFINITION / DEFAULT NATURAL RESPONSE
+    # 7. SHORT DEFINITION
     if is_short_def:
         return f"""You are VTUva, a conversational VTU Academic Assistant.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
 
 STRICT CONSTRAINTS:
-1. Start directly with a clear, concise definition (2-4 sentences).
-2. Follow with 3-4 bullet points highlighting key characteristics or applications.
-3. Do NOT add conversational preamble or filler.
+1. Start directly with a clear, concise definition based strictly on context.
+2. Follow with bullet points highlighting key characteristics supported by context.
 
 CONTEXT FROM VTU DOCUMENTS:
 {context}
@@ -270,17 +290,17 @@ CONTEXT FROM VTU DOCUMENTS:
 CONCISE DEFINITION ANSWER:
 """
 
-    # 7. GENERAL CONVERSATIONAL EXPLANATION
-    return f"""You are VTUva, a professional, conversational VTU Academic Assistant (ChatGPT-style response).
+    # 8. GENERAL CONVERSATIONAL EXPLANATION
+    return f"""You are VTUva, a professional, conversational VTU Academic Assistant.
+{VTUVA_SYSTEM_RULES}
 
 USER REQUEST:
 {full_instruction}
 
 STRICT CONSTRAINTS:
-1. Start directly with the answer. Avoid preamble (e.g. "Sure, I can help").
-2. Use Markdown formatting: headings (##, ###), bold key terms, bullet points, short readable paragraphs, code blocks, and clear math formatting.
-3. Keep the length proportional to what the user asked (concise for simple questions, thorough for detailed questions).
-4. Strictly ground facts in the retrieved VTU context without inventing unverified syllabus details.
+1. Start directly with the answer grounded strictly in VTU context. Avoid preamble.
+2. Use Markdown formatting: headings (##, ###), bold key terms, bullet points, short readable paragraphs.
+3. Keep the length proportional to what the user asked.
 
 CONTEXT FROM VTU DOCUMENTS:
 {context}
@@ -308,7 +328,7 @@ def extract_text_from_chunk(chunk) -> str:
 
 def generate_answer(question: str, context: str, subject: str = "General") -> str:
     if not context or not context.strip():
-        return "This topic is not present in the ingested VTU syllabus/notes documents."
+        return "I couldn't find enough information in the available VTU knowledge base to answer this accurately."
 
     google_api_key = os.getenv("GOOGLE_API_KEY")
     if google_api_key and google_api_key.strip():
@@ -348,7 +368,7 @@ def generate_answer(question: str, context: str, subject: str = "General") -> st
 def generate_answer_stream(question: str, context: str, subject: str = "General") -> Generator[str, None, None]:
     """Yields generated tokens one by one with fast zero-sleep fallback."""
     if not context or not context.strip():
-        yield "This topic is not present in the ingested VTU syllabus/notes documents."
+        yield "I couldn't find enough information in the available VTU knowledge base to answer this accurately."
         return
 
     google_api_key = os.getenv("GOOGLE_API_KEY")

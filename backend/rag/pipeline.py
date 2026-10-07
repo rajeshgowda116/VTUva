@@ -1,5 +1,7 @@
 import time
 import re
+import os
+import sqlite3
 from pathlib import Path
 from typing import Generator, Tuple, List, Dict, Any
 
@@ -76,7 +78,7 @@ CASUAL_RESPONSES = {
     "CAN_YOU_HELP": "Absolutely! 📚 Ask your VTU question and I'll help you understand it.",
 
     # Out of Scope / Non-VTU
-    "OUT_OF_SCOPE": "I'm focused on VTU academic topics. Ask me about your syllabus, subjects, notes, previous-year questions, or exam preparation. 📚",
+    "OUT_OF_SCOPE": "I can help with VTU-related subjects, syllabus, study material, previous-year questions, and exam preparation. 📚",
 
     # Default
     "DEFAULT": "I'm here to help! 😊 Ask me a question about your VTU studies."
@@ -103,6 +105,88 @@ def extract_sources(docs: List[Any]) -> List[Dict[str, Any]]:
     return sources
 
 
+def get_pyq_context_from_db(question: str, subject_code: str = "") -> str:
+    """Retrieves structured PYQ question groups and question items from sqlite vtuva.db."""
+    code_match = re.search(r"\b([A-Z]{2,5}\d{2,4}[A-Z]?)\b", question.upper())
+    subj = code_match.group(1) if code_match else (subject_code.upper().strip() if subject_code and subject_code.strip() not in ("GENERAL", "ALL") else "")
+
+    if not subj:
+        return ""
+
+    try:
+        db_path = Path(__file__).resolve().parent.parent.parent / "vtuva.db"
+        if not db_path.exists():
+            db_path = Path("vtuva.db")
+        if not db_path.exists():
+            return ""
+
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+
+        # Query pyq_questions
+        cursor.execute(
+            "SELECT main_question, sub_question, question_text, marks, year, session "
+            "FROM pyq_questions WHERE UPPER(subject_code) LIKE ? ORDER BY id",
+            (f"%{subj}%",)
+        )
+        questions = cursor.fetchall()
+
+        # Query pyq_question_groups
+        cursor.execute(
+            "SELECT canonical_question, repetition_count, years_asked, importance_tier "
+            "FROM pyq_question_groups WHERE UPPER(subject_code) LIKE ? ORDER BY repetition_count DESC",
+            (f"%{subj}%",)
+        )
+        groups = cursor.fetchall()
+        conn.close()
+
+        if not questions and not groups:
+            return ""
+
+        def parse_module(main_q_str):
+            if not main_q_str: return 1
+            num_match = re.search(r"\d+", str(main_q_str))
+            if not num_match: return 1
+            n = int(num_match.group(0))
+            if n in (1, 2): return 1
+            elif n in (3, 4): return 2
+            elif n in (5, 6): return 3
+            elif n in (7, 8): return 4
+            elif n in (9, 10): return 5
+            return 1
+
+        lines = [f"=== STRUCTURED PREVIOUS YEAR QUESTIONS (PYQs) FOR SUBJECT: {subj} ==="]
+
+        if groups:
+            lines.append("\n### Most Repeated / High-Frequency Questions:")
+            for g in groups:
+                canon_q, rep_cnt, years, tier = g
+                lines.append(f"- **[Repeated {rep_cnt}x | Years: {years}]** {canon_q} ({tier})")
+
+        if questions:
+            lines.append("\n### PYQ Items by VTU Exam Module:")
+            by_mod = {1: [], 2: [], 3: [], 4: [], 5: []}
+            seen_texts = set()
+            for q in questions:
+                mq, sq, text, marks, year, sess = q
+                m_num = parse_module(mq)
+                clean_t = text.strip()
+                if clean_t not in seen_texts:
+                    seen_texts.add(clean_t)
+                    by_mod[m_num].append(f"- **[{mq}{sq if sq else ''}]** {clean_t} ({marks} Marks)")
+
+            for m_i in range(1, 6):
+                if by_mod[m_i]:
+                    lines.append(f"\n#### Module {m_i}:")
+                    for q_item in by_mod[m_i]:
+                        lines.append(q_item)
+
+        return "\n".join(lines)
+    except Exception as e:
+        print(f"[DB PYQ Lookup Error]: {e}")
+        return ""
+
+
 def enhance_pyq_search_query(question: str) -> str:
     q_clean = question.strip()
 
@@ -124,7 +208,7 @@ def enhance_pyq_search_query(question: str) -> str:
     return q_clean
 
 
-def ask_question(question: str, history=None, subject: str = "General") -> Dict[str, Any]:
+def ask_question(question: str, history=None, subject: str = "General", filter_dict: dict = None) -> Dict[str, Any]:
     t_start = time.perf_counter()
 
     if not question or not question.strip():
@@ -147,21 +231,41 @@ def ask_question(question: str, history=None, subject: str = "General") -> Dict[
     t_rewrite = time.perf_counter() - t_rewrite_start
 
     search_query = enhance_pyq_search_query(standalone_question)
+    db_pyq_context = get_pyq_context_from_db(standalone_question, subject_code=subject)
 
     t_vector_start = time.perf_counter()
-    retriever = get_retriever(k=4)
+    retriever = get_retriever(k=4, filter_dict=filter_dict)
     docs = retriever.invoke(search_query)
     t_vector = time.perf_counter() - t_vector_start
 
     sources = extract_sources(docs)
 
-    if not docs:
+    # Deduplicate context chunks
+    unique_contents = []
+    seen_hashes = set()
+    for doc in docs:
+        c_str = doc.page_content.strip()
+        c_hash = hash(c_str[:200])
+        if c_hash not in seen_hashes:
+            seen_hashes.add(c_hash)
+            unique_contents.append(c_str)
+
+    vector_context = "\n\n".join(unique_contents)
+
+    context_parts = []
+    if db_pyq_context:
+        context_parts.append(db_pyq_context)
+    if vector_context:
+        context_parts.append(vector_context)
+
+    context = "\n\n".join(context_parts)
+
+    if not context or not context.strip():
         t_total = time.perf_counter() - t_start
         print(f"\n[PERF TIMING] Rewrite: {t_rewrite:.3f}s | Vector Search: {t_vector:.3f}s | TOTAL: {t_total:.3f}s")
-        return {"answer": "I couldn't find enough information about that in my current VTU knowledge base.", "sources": []}
+        return {"answer": "I couldn't find enough information in the available VTU knowledge base to answer this accurately.", "sources": []}
 
     t_llm_start = time.perf_counter()
-    context = "\n\n".join(doc.page_content for doc in docs)
     answer = generate_answer(standalone_question, context, subject=subject)
     t_llm = time.perf_counter() - t_llm_start
 
@@ -179,7 +283,7 @@ def ask_question(question: str, history=None, subject: str = "General") -> Dict[
     }
 
 
-def prepare_rag_context(question: str, history=None) -> Tuple[str, List[Dict[str, Any]], str, float, float]:
+def prepare_rag_context(question: str, history=None, filter_dict: dict = None) -> Tuple[str, List[Dict[str, Any]], str, float, float]:
     """Helper to prepare standalone question, sources, and context for streaming."""
     q_clean = question.strip() if question else ""
 
@@ -193,13 +297,36 @@ def prepare_rag_context(question: str, history=None) -> Tuple[str, List[Dict[str
     t_rewrite = time.perf_counter() - t_rewrite_start
 
     search_query = enhance_pyq_search_query(standalone_question)
+    db_pyq_context = get_pyq_context_from_db(
+        standalone_question,
+        subject_code=filter_dict.get("subject_code") if filter_dict else ""
+    )
 
     t_vector_start = time.perf_counter()
-    retriever = get_retriever(k=4)
+    retriever = get_retriever(k=4, filter_dict=filter_dict)
     docs = retriever.invoke(search_query)
     t_vector = time.perf_counter() - t_vector_start
 
     sources = extract_sources(docs)
-    context = "\n\n".join(doc.page_content for doc in docs)
+
+    # Deduplicate context chunks
+    unique_contents = []
+    seen_hashes = set()
+    for doc in docs:
+        c_str = doc.page_content.strip()
+        c_hash = hash(c_str[:200])
+        if c_hash not in seen_hashes:
+            seen_hashes.add(c_hash)
+            unique_contents.append(c_str)
+
+    vector_context = "\n\n".join(unique_contents)
+
+    context_parts = []
+    if db_pyq_context:
+        context_parts.append(db_pyq_context)
+    if vector_context:
+        context_parts.append(vector_context)
+
+    context = "\n\n".join(context_parts)
 
     return standalone_question, sources, context, t_rewrite, t_vector

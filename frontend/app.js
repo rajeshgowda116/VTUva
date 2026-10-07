@@ -710,4 +710,123 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     loadChatHistory();
   }
+
+  // ============================================================
+  // NATIONAL EXPO FEATURE SUITE MODAL HANDLERS
+  // ============================================================
+  const expoTrigger = document.getElementById('expo-demo-trigger');
+  const expoModal = document.getElementById('expo-demo-modal');
+  const expoClose = document.getElementById('expo-modal-close');
+  const expoOutput = document.getElementById('expo-demo-output');
+
+  if (expoTrigger && expoModal) {
+    expoTrigger.addEventListener('click', () => {
+      expoModal.classList.add('show');
+    });
+
+    expoClose?.addEventListener('click', () => {
+      expoModal.classList.remove('show');
+    });
+
+    expoModal.addEventListener('click', (e) => {
+      if (e.target === expoModal) expoModal.classList.remove('show');
+    });
+
+    // 1. RAG Debug Test
+    document.getElementById('demo-btn-rag')?.addEventListener('click', async () => {
+      if (!expoOutput) return;
+      expoOutput.innerHTML = '<span class="text-indigo-400">⏳ Executing RAG Pipeline Debug Query for BCS501...</span>';
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/debug`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: 'Explain process framework activities', subject_code: 'BCS501' })
+        });
+        const data = await res.json();
+        expoOutput.innerHTML = `
+<div class="text-emerald-400 font-bold mb-1">✔ Priority 1: RAG Accuracy Diagnostic Output</div>
+<div><span class="text-amber-400">Original Question:</span> ${escapeHtml(data.original_question)}</div>
+<div><span class="text-blue-400">Rewritten Standalone Query:</span> ${escapeHtml(data.rewritten_standalone_question)}</div>
+<div><span class="text-purple-400">Metadata Filters Applied:</span> ${JSON.stringify(data.metadata_filters_applied)}</div>
+<div><span class="text-indigo-400">Vector Search Time:</span> ${data.performance_metrics.vector_search_time_sec}s</div>
+<div><span class="text-emerald-400">Sources Retrieved (${data.sources_retrieved_count}):</span></div>
+<pre class="text-[11px] text-gray-300 mt-1 font-mono">${escapeHtml(JSON.stringify(data.sources, null, 2))}</pre>
+        `;
+      } catch (err) {
+        expoOutput.innerHTML = `<span class="text-red-400">❌ Error: ${err.message}</span>`;
+      }
+    });
+
+    // 2. PYQ Intelligence Test
+    document.getElementById('demo-btn-pyq')?.addEventListener('click', async () => {
+      if (!expoOutput) return;
+      expoOutput.innerHTML = '<span class="text-purple-400">⏳ Fetching SQL-backed PYQ Intelligence Analytics...</span>';
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/pyq/analytics?subject_code=BCS501`);
+        const data = await res.json();
+        expoOutput.innerHTML = `
+<div class="text-emerald-400 font-bold mb-1">✔ Priority 2: SQL PYQ Frequency Analysis (BCS501)</div>
+<div><span class="text-amber-400">Total Exam Questions Parsed:</span> ${data.total_parsed_questions}</div>
+<div><span class="text-purple-400">Unique Question Clusters:</span> ${data.unique_question_clusters}</div>
+<div><span class="text-indigo-400">Highly Repeated Questions (4+ Times):</span> ${data.highly_repeated_count}</div>
+<div class="mt-2 text-indigo-300 font-bold">Top Repeated Questions in SQL Database:</div>
+<div class="flex flex-col gap-1 mt-1">
+  ${data.top_repeated_questions.slice(0, 4).map(q => `
+    <div class="bg-[#1a1a2a] p-2 rounded border border-[#2b2b40]">
+      <div class="flex items-center justify-between text-indigo-400 font-semibold">
+        <span>Module ${q.module} | Repetition Count: ${q.repetition_count}x</span>
+        <span class="bg-indigo-900 text-indigo-200 text-[10px] px-1.5 py-0.5 rounded">${q.importance_tier}</span>
+      </div>
+      <div class="text-gray-200 mt-0.5">${escapeHtml(q.canonical_question)}</div>
+      <div class="text-gray-400 text-[10px] mt-0.5">Asked in Exams: ${q.years_asked}</div>
+    </div>
+  `).join('')}
+</div>
+        `;
+      } catch (err) {
+        expoOutput.innerHTML = `<span class="text-red-400">❌ Error: ${err.message}</span>`;
+      }
+    });
+
+    // 3. Automated Scraper Check Test
+    document.getElementById('demo-btn-updates')?.addEventListener('click', async () => {
+      if (!expoOutput) return;
+      expoOutput.innerHTML = '<span class="text-amber-400">⏳ Running SHA-256 VTU Portal Change Detection Scan...</span>';
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/updates/check`, { method: 'POST' });
+        const data = await res.json();
+        expoOutput.innerHTML = `
+<div class="text-emerald-400 font-bold mb-1">✔ Priority 3: Scraper & SHA-256 Change Detector Status</div>
+<div><span class="text-amber-400">Status Message:</span> ${escapeHtml(data.message)}</div>
+<div><span class="text-blue-400">Total Scraped Documents:</span> ${data.scraped_documents_count}</div>
+<div><span class="text-purple-400">NEW Documents:</span> ${data.new_documents}</div>
+<div><span class="text-indigo-400">UPDATED Documents:</span> ${data.updated_documents}</div>
+<div><span class="text-emerald-400">Checked At:</span> ${data.checked_at}</div>
+        `;
+      } catch (err) {
+        expoOutput.innerHTML = `<span class="text-red-400">❌ Error: ${err.message}</span>`;
+      }
+    });
+
+    // 4. Auth & Profile Test
+    document.getElementById('demo-btn-auth')?.addEventListener('click', async () => {
+      if (!expoOutput) return;
+      expoOutput.innerHTML = '<span class="text-emerald-400">⏳ Verifying Authentication & Student Profile...</span>';
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`);
+        const data = await res.json();
+        expoOutput.innerHTML = `
+<div class="text-emerald-400 font-bold mb-1">✔ Priority 4 & 5: Student Profile & PBKDF2 Auth Verification</div>
+<div><span class="text-amber-400">Student Name:</span> ${escapeHtml(data.name)}</div>
+<div><span class="text-blue-400">USN:</span> ${escapeHtml(data.usn)}</div>
+<div><span class="text-purple-400">Semester & Branch:</span> ${escapeHtml(data.semester)} (${escapeHtml(data.branch)})</div>
+<div><span class="text-indigo-400">Email:</span> ${escapeHtml(data.email)}</div>
+<div><span class="text-emerald-400">Session Bearer Token:</span> ${escapeHtml(data.token)}</div>
+        `;
+      } catch (err) {
+        expoOutput.innerHTML = `<span class="text-red-400">❌ Error: ${err.message}</span>`;
+      }
+    });
+  }
 });
+

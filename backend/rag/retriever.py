@@ -51,11 +51,12 @@ def get_vector_store():
     return _vector_store_instance
 
 
-def get_retriever(k: int = 4):
-    global _retriever_instance
-    if _retriever_instance is None or _retriever_instance.search_kwargs.get("k") != k:
-        vector_store = get_vector_store()
-        _retriever_instance = vector_store.as_retriever(
-            search_kwargs={"k": k}
-        )
-    return _retriever_instance
+def get_retriever(k: int = 4, filter_dict: dict = None):
+    vector_store = get_vector_store()
+    search_kwargs = {"k": k}
+    if filter_dict:
+        # Remove None values
+        clean_filter = {k: v for k, v in filter_dict.items() if v is not None}
+        if clean_filter:
+            search_kwargs["filter"] = clean_filter
+    return vector_store.as_retriever(search_kwargs=search_kwargs)
